@@ -1,0 +1,205 @@
+{
+  "entities": {
+    "UserProfile": {
+      "title": "UserProfile",
+      "description": "User profile with role (customer or admin)",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "phoneNumber": { "type": "string" },
+        "role": { "type": "string", "enum": ["customer", "admin"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["email", "role"]
+    },
+    "Product": {
+      "title": "Product",
+      "description": "Store products for sale",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "category": { "type": "string" },
+        "price": { "type": "number" },
+        "previousPrice": { "type": "number" },
+        "discount": { "type": "number" },
+        "stock": { "type": "number" },
+        "inStock": { "type": "boolean" },
+        "images": { "type": "array", "items": { "type": "string" } },
+        "description": { "type": "string" },
+        "details": { "type": "string" },
+        "deliveryInfo": { "type": "string" },
+        "featured": { "type": "boolean" },
+        "popular": { "type": "boolean" },
+        "rating": { "type": "number" },
+        "reviewCount": { "type": "number" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["name", "category", "price", "stock"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Product categories",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "slug": { "type": "string" },
+        "icon": { "type": "string" },
+        "image": { "type": "string" },
+        "itemCount": { "type": "number" }
+      },
+      "required": ["name", "slug"]
+    },
+    "Order": {
+      "title": "Order",
+      "description": "Customer purchase orders",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "orderNumber": { "type": "string" },
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "customerEmail": { "type": "string" },
+        "deliveryArea": { "type": "string" },
+        "shippingAddress": { "type": "string" },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "deliveryCharge": { "type": "number" },
+        "totalAmount": { "type": "number" },
+        "paymentMethod": { "type": "string", "enum": ["cod", "bkash", "nagad"] },
+        "paymentStatus": { "type": "string", "enum": ["pending", "verified", "failed"] },
+        "trxId": { "type": "string" },
+        "paymentScreenshot": { "type": "string" },
+        "orderStatus": { "type": "string", "enum": ["Pending", "Confirmed", "Processing", "Shipped", "Delivered", "Cancelled"] },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["orderNumber", "customerName", "customerPhone", "shippingAddress", "items", "totalAmount", "orderStatus"]
+    },
+    "Review": {
+      "title": "Review",
+      "description": "Customer ratings and reviews",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "productId": { "type": "string" },
+        "productName": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerId": { "type": "string" },
+        "rating": { "type": "number" },
+        "comment": { "type": "string" },
+        "status": { "type": "string", "enum": ["approved", "pending", "hidden"] },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["productId", "customerName", "rating", "comment"]
+    },
+    "Conversation": {
+      "title": "Conversation",
+      "description": "Support chat thread between a customer and admin",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "customerId": { "type": "string" },
+        "customerName": { "type": "string" },
+        "customerPhone": { "type": "string" },
+        "lastMessage": { "type": "string" },
+        "lastMessageTime": { "type": "string" },
+        "unreadByAdmin": { "type": "number" },
+        "unreadByCustomer": { "type": "number" }
+      },
+      "required": ["customerId"]
+    },
+    "Message": {
+      "title": "Message",
+      "description": "Individual support chat message",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "conversationId": { "type": "string" },
+        "senderId": { "type": "string" },
+        "senderRole": { "type": "string", "enum": ["customer", "admin"] },
+        "senderName": { "type": "string" },
+        "type": { "type": "string", "enum": ["text", "image", "voice"] },
+        "text": { "type": "string" },
+        "fileUrl": { "type": "string" },
+        "createdAt": { "type": "string" }
+      },
+      "required": ["conversationId", "senderId", "senderRole", "type", "createdAt"]
+    },
+    "Banner": {
+      "title": "Banner",
+      "description": "Homepage promotional banners",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "subtitle": { "type": "string" },
+        "image": { "type": "string" },
+        "link": { "type": "string" },
+        "badge": { "type": "string" },
+        "active": { "type": "boolean" },
+        "order": { "type": "number" }
+      },
+      "required": ["title", "image"]
+    },
+    "StoreSettings": {
+      "title": "StoreSettings",
+      "description": "Global store information and payment/delivery configuration",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "tagline": { "type": "string" },
+        "businessName": { "type": "string" },
+        "address": { "type": "string" },
+        "phone": { "type": "string" },
+        "whatsapp": { "type": "string" },
+        "email": { "type": "string" },
+        "logoUrl": { "type": "string" },
+        "deliveryInsideSandwip": { "type": "number" },
+        "deliveryOutsideSandwip": { "type": "number" },
+        "freeDeliveryThreshold": { "type": "number" },
+        "bkashNumber": { "type": "string" },
+        "bkashType": { "type": "string" },
+        "bkashInstruction": { "type": "string" },
+        "nagadNumber": { "type": "string" },
+        "nagadType": { "type": "string" },
+        "nagadInstruction": { "type": "string" },
+        "socialFacebook": { "type": "string" },
+        "socialInstagram": { "type": "string" },
+        "socialTiktok": { "type": "string" },
+        "socialTelegram": { "type": "string" },
+        "socialWhatsapp": { "type": "string" },
+        "additionalContacts": { "type": "array" }
+      }
+    },
+    "Advertisement": {
+      "title": "Advertisement",
+      "description": "Third-party sponsor promotional ads managed via Admin Panel",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "advertiserName": { "type": "string" },
+        "imageUrl": { "type": "string" },
+        "targetUrl": { "type": "string" },
+        "buttonText": { "type": "string" },
+        "position": { "type": "string", "enum": ["homepage", "product_list", "category_page", "product_details"] },
+        "displayOrder": { "type": "number" },
+        "startDate": { "type": "string" },
+        "endDate": { "type": "string" },
+        "active": { "type": "boolean" },
+        "openInNewTab": { "type": "boolean" },
+        "clicksCount": { "type": "number" },
+        "impressionsCount": { "type": "number" },
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
+      },
+      "required": ["title", "advertiserName", "imageUrl", "targetUrl", "position", "active"]
+    }
+  }
+}

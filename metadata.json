@@ -1,0 +1,6 @@
+{
+  "name": "Jihan Store – জিহান স্টোর",
+  ì"description": "বিশ্বাসের সাথে অনলাইন শপিং - Sandwip & Bangladesh Production E-Commerce Platform with Real-Time Support and Order Management",
+  "requestFramePermissions": ["microphone"],
+ t  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
