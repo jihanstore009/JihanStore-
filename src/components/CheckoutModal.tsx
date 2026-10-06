@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   X, 
   ShieldCheck, 
@@ -15,6 +15,7 @@ import {
 import confetti from 'canvas-confetti';
 import { useCart } from '../context/CartContext';
 import { useSettings } from '../context/SettingsContext';
+import { useAuth } from '../context/AuthContext';
 import { placeOrder } from '../services/storeService';
 import { uploadMedia } from '../firebase/config';
 import { Order, PaymentMethod } from '../types';
@@ -23,15 +24,18 @@ interface CheckoutModalProps {
   isOpen: boolean;
   onClose: () => void;
   onOrderSuccess: (order: Order) => void;
+  onRequestLogin?: () => void;
 }
 
 export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   isOpen,
   onClose,
   onOrderSuccess,
+  onRequestLogin,
 }) => {
-  const { cart, subtotal, deliveryArea, setDeliveryArea, getDeliveryCharge, clearCart } = useCart();
+  const { cart, subtotal, deliveryArea, selectedZoneId, setDeliveryArea, setSelectedZoneId, getDeliveryCharge, clearCart } = useCart();
   const { settings } = useSettings();
+  const { currentUser, userProfile, updateUserProfileData } = useAuth();
 
   // Form Fields
   const [customerName, setCustomerName] = useState('');
@@ -40,7 +44,7 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [orderNotes, setOrderNotes] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cod');
   const [trxId, setTrxId] = useState('');
-  
+
   // Screenshot upload
   const [screenshotFile, setScreenshotFile] = useState<File | null>(null);
   const [screenshotPreview, setScreenshotPreview] = useState<string | null>(null);
@@ -50,9 +54,29 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const [errorMessage, setErrorMessage] = useState('');
   const [copiedNumber, setCopiedNumber] = useState(false);
 
+  // Auto pre-fill from customer profile when logged in
+  useEffect(() => {
+    if (isOpen && currentUser) {
+      if (userProfile?.displayName) {
+        setCustomerName(prev => prev || userProfile.displayName);
+      } else if (currentUser.displayName) {
+        setCustomerName(prev => prev || currentUser.displayName || '');
+      }
+      if (userProfile?.phoneNumber) {
+        setCustomerPhone(prev => prev || userProfile.phoneNumber || '');
+      }
+      if (userProfile?.address) {
+        setShippingAddress(prev => prev || userProfile.address || '');
+      }
+      if (userProfile?.deliveryArea) {
+        setDeliveryArea(userProfile.deliveryArea);
+      }
+    }
+  }, [isOpen, currentUser, userProfile]);
+
   if (!isOpen) return null;
 
-  const deliveryCharge = getDeliveryCharge(settings.deliveryInsideSandwip, settings.deliveryOutsideSandwip);
+  const deliveryCharge = getDeliveryCharge(settings.deliveryInsideSandwip, settings.deliveryOutsideSandwip, settings.deliveryZones);
   const totalAmount = subtotal + deliveryCharge;
 
   const rocketAccount = settings.paymentAccounts?.find(p => p.method === 'rocket' && p.enabled);
@@ -76,6 +100,12 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
   const handleSubmitOrder = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return; // Duplicate submission protection!
+
+    if (!currentUser) {
+      setErrorMessage('অর্ডার করতে অনুগ্রহ করে লগইন করুন অথবা নতুন অ্যাকাউন্ট তৈরি করুন।');
+      onRequestLogin?.();
+      return;
+    }
 
     if (!customerName.trim() || !customerPhone.trim() || !shippingAddress.trim()) {
       setErrorMessage('অনুগ্রহ করে নাম, সচল মোবাইল নম্বর এবং পূর্ণাঙ্গ ঠিকানা প্রদান করুন।');
@@ -105,6 +135,8 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
       }));
 
       const newOrder = await placeOrder({
+        customerId: currentUser.uid,
+        customerEmail: currentUser.email || undefined,
         customerName: customerName.trim(),
         customerPhone: customerPhone.trim(),
         deliveryArea,
@@ -118,6 +150,19 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
         trxId: trxId.trim() || undefined,
         paymentScreenshot: screenshotUrl || undefined,
       });
+
+      // Update customer profile with phone or address if not already saved
+      if (currentUser && (!userProfile?.address || !userProfile?.phoneNumber)) {
+        try {
+          await updateUserProfileData({
+            phoneNumber: userProfile?.phoneNumber || customerPhone.trim(),
+            address: userProfile?.address || shippingAddress.trim(),
+            deliveryArea
+          });
+        } catch {
+          // Non-blocking
+        }
+      }
 
       // Confetti celebration
       try {
@@ -174,6 +219,47 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
             </div>
           )}
 
+          {/* Customer Authentication State Banner */}
+          {!currentUser ? (
+            <div className="p-3.5 bg-amber-50 border border-amber-300 rounded-2xl flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 shadow-xs">
+              <div className="flex items-start gap-2.5">
+                <div className="p-1.5 rounded-xl bg-amber-400 text-slate-950 shrink-0 mt-0.5">
+                  <AlertCircle className="w-4 h-4" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-amber-950">
+                    অর্ডার করতে অনুগ্রহ করে লগইন করুন অথবা নতুন অ্যাকাউন্ট তৈরি করুন।
+                  </p>
+                  <p className="text-[11px] text-amber-800 mt-0.5">
+                    অর্ডার করার জন্য কাস্টমার অ্যাকাউন্ট আবশ্যক। আপনার কার্টের আইটেমগুলো অক্ষুণ্ণ থাকবে।
+                  </p>
+                </div>
+              </div>
+              {onRequestLogin && (
+                <button
+                  type="button"
+                  id="checkout-login-prompt-btn"
+                  onClick={onRequestLogin}
+                  className="px-3.5 py-1.5 bg-blue-700 hover:bg-blue-800 text-white rounded-xl text-xs font-bold shrink-0 transition-colors shadow-xs cursor-pointer"
+                >
+                  লগইন / সাইন আপ
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="p-3 bg-blue-50/70 border border-blue-100 rounded-2xl flex items-center justify-between text-xs text-blue-900">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+                <span>
+                  লগইন আছেন: <strong className="font-bold text-slate-800">{userProfile?.displayName || currentUser.email}</strong>
+                </span>
+              </div>
+              <span className="text-[11px] text-blue-700 font-semibold bg-blue-100/60 px-2 py-0.5 rounded-lg hidden sm:inline">
+                ভেরিফাইড অ্যাকাউন্ট
+              </span>
+            </div>
+          )}
+
           {/* Section 1: Customer Details */}
           <div className="space-y-3">
             <h3 className="font-bold text-xs sm:text-sm text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
@@ -213,18 +299,40 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
               </div>
             </div>
 
-            {/* Delivery Location Selection */}
+            {/* Delivery Location & Upazila Selection */}
             <div>
-              <label className="block text-xs font-semibold text-slate-700 mb-1.5">
-                ডেলিভারি এরিয়া নির্বাচন করুন <span className="text-red-500">*</span>
-              </label>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="flex items-center justify-between mb-1.5">
+                <label className="block text-xs font-semibold text-slate-700">
+                  ডেলিভারি এরিয়া / উপজেলা নির্বাচন করুন <span className="text-red-500">*</span>
+                </label>
+                <span className={`text-[11px] font-bold px-2 py-0.5 rounded-md ${
+                  deliveryCharge === 0 ? 'bg-emerald-100 text-emerald-800' : 'bg-blue-100 text-blue-800'
+                }`}>
+                  {deliveryCharge === 0 ? '✓ ফ্রি ডেলিভারি (৳০)' : `ডেলিভারি চার্জ: ৳${deliveryCharge}`}
+                </span>
+              </div>
+
+              {/* Informative Rate Explanation */}
+              <div className="p-2.5 mb-2.5 rounded-xl bg-blue-50/70 border border-blue-200/80 text-[11px] text-blue-900 flex items-center justify-between">
+                <span>
+                  <strong>ডেলিভারি রেট:</strong> সন্দ্বীপের ভিতরে ফ্রি (৳০), সন্দ্বীপের বাইরে ১৩০ টাকা
+                </span>
+                <span className="font-bold text-amber-700 bg-amber-100/70 px-1.5 py-0.5 rounded text-[10px]">
+                  পোস্টকোড ৪৩০১
+                </span>
+              </div>
+
+              {/* Primary Sandwip vs Outside Sandwip options */}
+              <div className="grid grid-cols-2 gap-3 mb-2.5">
                 <button
                   type="button"
                   id="checkout-inside-sandwip-btn"
-                  onClick={() => setDeliveryArea('inside_sandwip')}
-                  className={`p-3 rounded-2xl border text-left transition-all ${
-                    deliveryArea === 'inside_sandwip'
+                  onClick={() => {
+                    setDeliveryArea('inside_sandwip');
+                    setSelectedZoneId(undefined);
+                  }}
+                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                    deliveryArea === 'inside_sandwip' && !selectedZoneId
                       ? 'border-blue-700 bg-blue-50/80 text-blue-900 font-bold ring-2 ring-blue-700'
                       : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
                   }`}
@@ -232,18 +340,23 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                   <div className="flex items-center justify-between">
                     <span className="font-bold text-xs sm:text-sm">সন্দ্বীপের ভিতরে</span>
                     <span className="px-1.5 py-0.5 bg-emerald-100 text-emerald-800 text-[10px] font-black rounded-md">
-                      ফ্রি
+                      {settings.deliveryInsideSandwip === 0 ? 'ফ্রি' : `৳${settings.deliveryInsideSandwip}`}
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-1">চার্জ: ৳{settings.deliveryInsideSandwip} (পোস্টকোড ৪৩০১)</p>
+                  <p className="text-[11px] text-slate-500 mt-1">
+                    {settings.deliveryInsideSandwip === 0 ? 'চার্জ সম্পূর্ণ ফ্রি (৳০)' : `চার্জ ৳${settings.deliveryInsideSandwip}`} (পোস্টকোড ৪৩০১)
+                  </p>
                 </button>
 
                 <button
                   type="button"
                   id="checkout-outside-sandwip-btn"
-                  onClick={() => setDeliveryArea('outside_sandwip')}
-                  className={`p-3 rounded-2xl border text-left transition-all ${
-                    deliveryArea === 'outside_sandwip'
+                  onClick={() => {
+                    setDeliveryArea('outside_sandwip');
+                    setSelectedZoneId(undefined);
+                  }}
+                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer ${
+                    deliveryArea === 'outside_sandwip' && !selectedZoneId
                       ? 'border-blue-700 bg-blue-50/80 text-blue-900 font-bold ring-2 ring-blue-700'
                       : 'border-slate-200 bg-white text-slate-700 hover:border-slate-300'
                   }`}
@@ -254,9 +367,52 @@ export const CheckoutModal: React.FC<CheckoutModalProps> = ({
                       ৳{settings.deliveryOutsideSandwip}
                     </span>
                   </div>
-                  <p className="text-[11px] text-slate-500 mt-1">সারাদেশে হোম ডেলিভারি</p>
+                  <p className="text-[11px] text-slate-500 mt-1">সারাদেশে কুরিয়ারে হোম ডেলিভারি</p>
                 </button>
               </div>
+
+              {/* Dynamic Upazilas / Custom Delivery Zones (Configured by Admin) */}
+              {settings.deliveryZones && settings.deliveryZones.filter(z => z.enabled).length > 0 && (
+                <div className="p-3 bg-slate-50 border border-slate-200/90 rounded-2xl space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-slate-700 uppercase tracking-wider">
+                      উপজেলা অনুযায়ী নির্ধারিত ডেলিভারি চার্জ:
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-medium">
+                      এডমিন নিয়ন্ত্রিত তালিকা
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-36 overflow-y-auto pr-1">
+                    {settings.deliveryZones.filter(z => z.enabled).map((zone) => {
+                      const isSelected = selectedZoneId === zone.id;
+                      return (
+                        <button
+                          key={zone.id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedZoneId(zone.id);
+                            setDeliveryArea(zone.isInsideSandwip ? 'inside_sandwip' : 'outside_sandwip');
+                          }}
+                          className={`p-2 rounded-xl text-left border text-xs flex items-center justify-between transition-all cursor-pointer ${
+                            isSelected
+                              ? 'bg-blue-100/70 border-blue-600 text-blue-950 font-bold ring-1 ring-blue-600 shadow-xs'
+                              : 'bg-white border-slate-200 text-slate-700 hover:bg-slate-100'
+                          }`}
+                        >
+                          <span className="truncate pr-2 font-medium">{zone.name}</span>
+                          <span className={`px-2 py-0.5 rounded-md text-[10px] font-black shrink-0 ${
+                            zone.charge === 0 
+                              ? 'bg-emerald-100 text-emerald-800 border border-emerald-300' 
+                              : 'bg-indigo-50 text-indigo-700'
+                          }`}>
+                            {zone.charge === 0 ? 'ফ্রি' : `৳${zone.charge}`}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
 
             <div>

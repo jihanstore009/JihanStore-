@@ -13,7 +13,8 @@ import {
   Star, 
   ArrowUpDown,
   Home as HomeIcon,
-  Tag
+  Tag,
+  User as UserIcon
 } from 'lucide-react';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { SettingsProvider, useSettings } from './context/SettingsContext';
@@ -34,6 +35,9 @@ import { Footer } from './components/Footer';
 import { PolicyModal } from './components/PolicyModal';
 import { AdminApp } from './admin/AdminApp';
 import { AdBannerArea } from './components/AdBannerArea';
+import { CustomerAuthModal } from './components/CustomerAuthModal';
+import { CustomerAccountModal } from './components/CustomerAccountModal';
+import { CustomerReviewsSection } from './components/CustomerReviewsSection';
 
 interface StoreAppProps {
   onOpenAdminApp?: () => void;
@@ -42,7 +46,7 @@ interface StoreAppProps {
 const StoreApp: React.FC<StoreAppProps> = ({ onOpenAdminApp }) => {
   const { settings, categories, banners } = useSettings();
   const { addToCart, totalItems } = useCart();
-  const { isAdmin } = useAuth();
+  const { currentUser, isAdmin } = useAuth();
 
   // Products State
   const [products, setProducts] = useState<Product[]>(INITIAL_PRODUCTS);
@@ -63,6 +67,34 @@ const StoreApp: React.FC<StoreAppProps> = ({ onOpenAdminApp }) => {
   const [isAdminOpen, setIsAdminOpen] = useState(false);
   const [policyType, setPolicyType] = useState<'privacy' | 'terms' | 'return' | 'about' | null>(null);
   const [completedOrder, setCompletedOrder] = useState<Order | null>(null);
+
+  // Customer Auth & Account Modals State
+  const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
+  const [authModalMode, setAuthModalMode] = useState<'login' | 'register' | 'forgot'>('login');
+  const [authRedirectReason, setAuthRedirectReason] = useState<string | undefined>(undefined);
+  const [postAuthAction, setPostAuthAction] = useState<(() => void) | null>(null);
+
+  const [isCustomerAccountOpen, setIsCustomerAccountOpen] = useState(false);
+  const [customerAccountTab, setCustomerAccountTab] = useState<'profile' | 'orders'>('profile');
+
+  const openLoginModal = (reason?: string, onAfterSuccess?: () => void) => {
+    setAuthModalMode('login');
+    setAuthRedirectReason(reason);
+    setPostAuthAction(() => onAfterSuccess || null);
+    setIsAuthModalOpen(true);
+  };
+
+  const openRegisterModal = (reason?: string, onAfterSuccess?: () => void) => {
+    setAuthModalMode('register');
+    setAuthRedirectReason(reason);
+    setPostAuthAction(() => onAfterSuccess || null);
+    setIsAuthModalOpen(true);
+  };
+
+  const openCustomerAccountModal = (tab: 'profile' | 'orders' = 'profile') => {
+    setCustomerAccountTab(tab);
+    setIsCustomerAccountOpen(true);
+  };
 
   // Subscribe to live products from Firestore
   useEffect(() => {
@@ -98,7 +130,13 @@ const StoreApp: React.FC<StoreAppProps> = ({ onOpenAdminApp }) => {
     addToCart(product, quantity);
     setIsCartOpen(false);
     setSelectedProduct(null);
-    setIsCheckoutOpen(true);
+    if (!currentUser) {
+      openLoginModal('অর্ডার করতে অনুগ্রহ করে লগইন করুন অথবা নতুন অ্যাকাউন্ট তৈরি করুন।', () => {
+        setIsCheckoutOpen(true);
+      });
+    } else {
+      setIsCheckoutOpen(true);
+    }
   };
 
   const handleOrderSuccess = (order: Order) => {
@@ -126,6 +164,9 @@ const StoreApp: React.FC<StoreAppProps> = ({ onOpenAdminApp }) => {
         onOpenTracking={() => setIsTrackingOpen(true)}
         onOpenSupport={() => setIsSupportOpen(true)}
         onOpenAdmin={() => setIsAdminOpen(true)}
+        onOpenLogin={() => openLoginModal()}
+        onOpenRegister={() => openRegisterModal()}
+        onOpenCustomerAccount={(tab) => openCustomerAccountModal(tab)}
         onSelectCategory={(cat) => {
           setSelectedCategory(cat);
           const el = document.getElementById('products-section');
@@ -307,6 +348,12 @@ const StoreApp: React.FC<StoreAppProps> = ({ onOpenAdminApp }) => {
           )}
         </section>
 
+        {/* Customer Reviews & Testimonials Section */}
+        <CustomerReviewsSection 
+          products={products} 
+          onSelectProduct={(p) => setSelectedProduct(p)} 
+        />
+
         {/* Sandwip Fast Delivery Banner Highlight */}
         <section className="max-w-7xl mx-auto px-3 sm:px-6 py-6">
           <div className="p-4 sm:p-6 rounded-3xl bg-gradient-to-r from-blue-900 via-blue-800 to-slate-900 text-white flex flex-col sm:flex-row items-center justify-between gap-4 shadow-xl border border-blue-800/40">
@@ -433,6 +480,20 @@ const StoreApp: React.FC<StoreAppProps> = ({ onOpenAdminApp }) => {
           <MessageSquare className="w-5 h-5 text-blue-700" />
           <span>চ্যাট</span>
         </button>
+
+        <button
+          onClick={() => {
+            if (currentUser) {
+              openCustomerAccountModal('profile');
+            } else {
+              openLoginModal();
+            }
+          }}
+          className="flex flex-col items-center gap-0.5 py-1 hover:text-blue-700"
+        >
+          <UserIcon className="w-5 h-5 text-amber-600" />
+          <span>{currentUser ? 'অ্যাকাউন্ট' : 'লগইন'}</span>
+        </button>
       </div>
 
       {/* Product Detail Modal */}
@@ -446,7 +507,15 @@ const StoreApp: React.FC<StoreAppProps> = ({ onOpenAdminApp }) => {
       <CartModal
         isOpen={isCartOpen}
         onClose={() => setIsCartOpen(false)}
-        onProceedToCheckout={() => setIsCheckoutOpen(true)}
+        onProceedToCheckout={() => {
+          if (!currentUser) {
+            openLoginModal('অর্ডার করতে অনুগ্রহ করে লগইন করুন অথবা নতুন অ্যাকাউন্ট তৈরি করুন।', () => {
+              setIsCheckoutOpen(true);
+            });
+          } else {
+            setIsCheckoutOpen(true);
+          }
+        }}
       />
 
       {/* Checkout Modal */}
@@ -454,6 +523,40 @@ const StoreApp: React.FC<StoreAppProps> = ({ onOpenAdminApp }) => {
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
         onOrderSuccess={(order) => handleOrderSuccess(order)}
+        onRequestLogin={() => {
+          openLoginModal('অর্ডার করতে অনুগ্রহ করে লগইন করুন অথবা নতুন অ্যাকাউন্ট তৈরি করুন।', () => {
+            setIsCheckoutOpen(true);
+          });
+        }}
+      />
+
+      {/* Customer Auth Modal (Login, Sign Up, Password Reset) */}
+      <CustomerAuthModal
+        isOpen={isAuthModalOpen}
+        onClose={() => {
+          setIsAuthModalOpen(false);
+          setAuthRedirectReason(undefined);
+          setPostAuthAction(null);
+        }}
+        initialMode={authModalMode}
+        redirectReason={authRedirectReason}
+        onSuccess={() => {
+          if (postAuthAction) {
+            postAuthAction();
+            setPostAuthAction(null);
+          }
+        }}
+      />
+
+      {/* Customer Profile & Account Modal */}
+      <CustomerAccountModal
+        isOpen={isCustomerAccountOpen}
+        onClose={() => setIsCustomerAccountOpen(false)}
+        initialTab={customerAccountTab}
+        onTrackOrder={(orderNumber) => {
+          setTrackingOrderNumber(orderNumber);
+          setIsTrackingOpen(true);
+        }}
       />
 
       {/* Order Success Modal */}

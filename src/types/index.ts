@@ -116,12 +116,23 @@ export interface StoreEmailContact {
   isPrimary?: boolean;
 }
 
+export interface StoreAddress {
+  id: string;
+  title: string;
+  address: string;
+  phone?: string;
+  isPrimary?: boolean;
+  notes?: string;
+}
+
 export interface StoreSocialLink {
   id: string;
-  platform: 'facebook' | 'instagram' | 'tiktok' | 'youtube' | 'telegram' | 'whatsapp' | 'website' | 'other';
+  platform: 'facebook' | 'instagram' | 'tiktok' | 'youtube' | 'telegram' | 'whatsapp' | 'website' | 'other' | string;
   platformName: string;
+  platformNameEn?: string;
   url: string;
   enabled: boolean;
+  language?: 'both' | 'bn' | 'en';
 }
 
 export interface StorePaymentAccount {
@@ -179,6 +190,7 @@ export interface StoreSettings {
   socialWhatsapp: string;
   additionalContacts: AdditionalContact[];
   // Extended structured fields for comprehensive admin control
+  addresses?: StoreAddress[];
   phoneNumbers?: StorePhoneContact[];
   emailAddresses?: StoreEmailContact[];
   socialLinks?: StoreSocialLink[];
@@ -223,8 +235,11 @@ export interface UserProfile {
   email: string;
   displayName: string;
   phoneNumber?: string;
+  address?: string;
+  deliveryArea?: 'inside_sandwip' | 'outside_sandwip';
   role: 'customer' | 'admin';
   createdAt: string;
+  updatedAt?: string;
 }
 
 export interface SourceVersion {

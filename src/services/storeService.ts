@@ -49,29 +49,39 @@ export const DEFAULT_SETTINGS: StoreSettings = {
   socialFacebook: 'https://www.facebook.com/jihanstore009',
   socialInstagram: 'https://www.instagram.com/jihan.store009',
   socialTiktok: 'https://www.tiktok.com/@jihanstore009',
-  socialTelegram: 'https://t.me/jihanstore009',
+  socialTelegram: 'https://t.me/jihanstorebd009',
   socialWhatsapp: 'https://wa.me/8801867841638',
   additionalContacts: [
-    { id: '1', type: 'phone', label: 'সাপোর্ট হটলাইন', value: '01867841638' },
-    { id: '2', type: 'address', label: 'সন্দ্বীপ আউটলেট', value: 'পোস্টকোড ৪৩০১, সন্দ্বীপ, চট্টগ্রাম' }
+    { id: '1', type: 'phone', label: 'কল হটলাইন (Call)', value: '01867841638' },
+    { id: '2', type: 'whatsapp', label: 'হোয়াটসঅ্যাপ চ্যাট', value: '8801867841638' },
+    { id: '3', type: 'email', label: 'অফিসিয়াল ইমেইল ১', value: 'jihanstore009@gmail.com' },
+    { id: '4', type: 'email', label: 'অফিসিয়াল ইমেইল ২', value: 'jihanstoreofficial009@gmail.com' },
+    { id: '5', type: 'address', label: 'ঠিকানা ও পোস্টকোড', value: 'পোস্টকোড ৪৩০১, সন্দ্বীপ, চট্টগ্রাম, বাংলাদেশ' }
+  ],
+  addresses: [
+    {
+      id: 'addr-1',
+      title: 'প্রধান শাখা ও ডেলিভারি হাব (Head Office & Hub)',
+      address: 'Postcode 4301, Sandwip, Chittagong, Bangladesh (পোস্টকোড ৪৩০১, সন্দ্বীপ, চট্টগ্রাম, বাংলাদেশ)',
+      phone: '01867841638',
+      isPrimary: true,
+      notes: 'হেড অফিস ও মূল ডেলিভারি সেন্টার'
+    }
   ],
   phoneNumbers: [
-    { id: 'phone-1', number: '01867841638', label: 'প্রধান হটলাইন / কাস্টমার কেয়ার', type: 'primary', isPrimary: true, notes: 'সকাল ৯টা - রাত ১১টা' },
-    { id: 'phone-2', number: '01867841638', label: 'অফিসিয়াল হোয়াটসঅ্যাপ হেল্পলাইন', type: 'whatsapp', isPrimary: false, notes: 'সার্বক্ষণিক চ্যাট সাপোর্ট' },
-    { id: 'phone-3', number: '01867841638', label: 'সন্দ্বীপ আউটলেট সরাসরি ফোন', type: 'secondary', isPrimary: false, notes: 'পোস্টকোড ৪৩০১ আউটলেট' }
+    { id: 'phone-1', number: '01867841638', label: 'কল নম্বর (Call Helpline)', type: 'primary', isPrimary: true, notes: 'সকাল ৯টা - রাত ১১টা' },
+    { id: 'phone-2', number: '8801867841638', label: 'হোয়াটসঅ্যাপ হেল্পলাইন (WhatsApp)', type: 'whatsapp', isPrimary: false, notes: 'https://wa.me/8801867841638' }
   ],
   emailAddresses: [
-    { id: 'email-1', email: 'jihanstore009@gmail.com', label: 'প্রধান সাপোর্ট ও কাস্টমার সার্ভিস', isPrimary: true },
-    { id: 'email-2', email: 'order@jihanstore.com', label: 'অর্ডার ও বিলিং অনুসন্ধান', isPrimary: false }
+    { id: 'email-1', email: 'jihanstore009@gmail.com', label: 'প্রধান ইমেইল (Primary)', isPrimary: true },
+    { id: 'email-2', email: 'jihanstoreofficial009@gmail.com', label: 'অফিসিয়াল ইমেইল (Official)', isPrimary: false }
   ],
   socialLinks: [
-    { id: 'soc-1', platform: 'facebook', platformName: 'Facebook Page', url: 'https://www.facebook.com/jihanstore009', enabled: true },
-    { id: 'soc-2', platform: 'instagram', platformName: 'Instagram Profile', url: 'https://www.instagram.com/jihan.store009', enabled: true },
-    { id: 'soc-3', platform: 'tiktok', platformName: 'TikTok Account', url: 'https://www.tiktok.com/@jihanstore009', enabled: true },
-    { id: 'soc-4', platform: 'youtube', platformName: 'YouTube Channel', url: 'https://www.youtube.com/@jihanstore009', enabled: false },
-    { id: 'soc-5', platform: 'telegram', platformName: 'Telegram Channel', url: 'https://t.me/jihanstore009', enabled: true },
-    { id: 'soc-6', platform: 'whatsapp', platformName: 'WhatsApp Community', url: 'https://wa.me/8801867841638', enabled: true },
-    { id: 'soc-7', platform: 'website', platformName: 'অফিসিয়াল ওয়েবসাইট', url: 'https://jihanstore.com', enabled: false }
+    { id: 'soc-1', platform: 'facebook', platformName: 'ফেসবুক পেজ', platformNameEn: 'Facebook Page', url: 'https://www.facebook.com/jihanstore009', enabled: true, language: 'both' },
+    { id: 'soc-2', platform: 'instagram', platformName: 'ইনস্টাগ্রাম', platformNameEn: 'Instagram Profile', url: 'https://www.instagram.com/jihan.store009', enabled: true, language: 'both' },
+    { id: 'soc-3', platform: 'tiktok', platformName: 'টিকটক', platformNameEn: 'TikTok Account', url: 'https://www.tiktok.com/@jihanstore009', enabled: true, language: 'both' },
+    { id: 'soc-4', platform: 'telegram', platformName: 'টেলিগ্রাম চ্যানেল', platformNameEn: 'Telegram Channel', url: 'https://t.me/jihanstorebd009', enabled: true, language: 'both' },
+    { id: 'soc-5', platform: 'whatsapp', platformName: 'হোয়াটসঅ্যাপ কমিউনিটি', platformNameEn: 'WhatsApp Community', url: 'https://wa.me/8801867841638', enabled: true, language: 'both' }
   ],
   paymentAccounts: [
     {
@@ -95,36 +105,13 @@ export const DEFAULT_SETTINGS: StoreSettings = {
       instruction: 'নগদ অ্যাপ অথবা *167# ডায়াল করে Send Money করুন। সফল লেনদেনের পর TrxID এবং প্রয়োজনে স্ক্রিনশট দিন।',
       enabled: true,
       isDefault: false
-    },
-    {
-      id: 'pay-3',
-      method: 'rocket',
-      methodName: 'রকেট (Rocket)',
-      accountNumber: '01867841638-7',
-      accountType: 'Personal',
-      accountHolderName: 'JIHAN STORE',
-      instruction: 'রকেট অ্যাপ অথবা *322# ডায়াল করে Send Money করুন এবং ১২ ডিজিটের ট্রানজেকশন আইডি দিন।',
-      enabled: false,
-      isDefault: false
-    },
-    {
-      id: 'pay-4',
-      method: 'bank',
-      methodName: 'ইসলামী ব্যাংক বাংলাদেশ পিএলসি',
-      accountNumber: '20501234567890100',
-      accountType: 'Savings / সঞ্চয়ী',
-      accountHolderName: 'JIHAN STORE (জিহান স্টোর)',
-      bankName: 'Islami Bank Bangladesh PLC',
-      branchName: 'Sandwip Branch, Chittagong',
-      routingNumber: '125150890',
-      instruction: 'ব্যাংক ট্রান্সফার বা অনলাইন ডিপোজিট করার পর ডিপোজিট স্লিপের ছবি বা রেফারেন্স নম্বর আপলোড করুন।',
-      enabled: false,
-      isDefault: false
     }
   ],
   deliveryZones: [
-    { id: 'zone-1', name: 'সন্দ্বীপের ভিতরে (Sandwip Local Delivery)', charge: 0, estimatedTime: '২৪-৪৮ ঘণ্টা', enabled: true, isInsideSandwip: true },
-    { id: 'zone-2', name: 'সন্দ্বীপের বাইরে সমগ্র বাংলাদেশ (Courier Service)', charge: 130, estimatedTime: '২-৪ কার্যদিবস', enabled: true, isInsideSandwip: false }
+    { id: 'zone-1', name: 'সন্দ্বীপ উপজেলা (Sandwip - পোস্টকোড ৪৩০১)', charge: 0, estimatedTime: '২৪-৪৮ ঘণ্টা', enabled: true, isInsideSandwip: true },
+    { id: 'zone-2', name: 'সন্দ্বীপের বাইরে সমগ্র বাংলাদেশ', charge: 130, estimatedTime: '২-৪ কার্যদিবস', enabled: true, isInsideSandwip: false },
+    { id: 'zone-3', name: 'সীতাকুণ্ড উপজেলা (Sitakunda)', charge: 70, estimatedTime: '২-৩ কার্যদিবস', enabled: true, isInsideSandwip: false },
+    { id: 'zone-4', name: 'চট্টগ্রাম সদর (Chittagong Sadar)', charge: 100, estimatedTime: '২-৩ কার্যদিবস', enabled: true, isInsideSandwip: false }
   ],
   brandColors: {
     primary: '#1e3a8a',
@@ -141,31 +128,110 @@ export const DEFAULT_SETTINGS: StoreSettings = {
 export function normalizeSettings(data?: Partial<StoreSettings> | null): StoreSettings {
   const base: StoreSettings = { ...DEFAULT_SETTINGS, ...(data || {}) };
 
+  // Guaranteed contact details fallback
+  if (!base.address || base.address.length < 5) {
+    base.address = 'Postcode 4301, Sandwip, Chittagong, Bangladesh';
+  }
+  if (!base.phone) base.phone = '01867841638';
+  if (!base.whatsapp) base.whatsapp = '8801867841638';
+  if (!base.email) base.email = 'jihanstore009@gmail.com';
+
+  // 0. Addresses migration/normalization
+  if (!base.addresses || !Array.isArray(base.addresses) || base.addresses.length === 0) {
+    base.addresses = [
+      {
+        id: 'addr-1',
+        title: 'প্রধান কার্যালয় ও হাব (Head Office & Hub)',
+        address: base.address || 'Postcode 4301, Sandwip, Chittagong, Bangladesh (পোস্টকোড ৪৩০১, সন্দ্বীপ, চট্টগ্রাম, বাংলাদেশ)',
+        phone: base.phone || '01867841638',
+        isPrimary: true,
+        notes: 'হেড অফিস ও মূল ডেলিভারি সেন্টার'
+      }
+    ];
+  }
+
   // 1. Phone numbers migration/normalization
   if (!base.phoneNumbers || !Array.isArray(base.phoneNumbers) || base.phoneNumbers.length === 0) {
     base.phoneNumbers = [
-      { id: 'phone-1', number: base.phone || '01867841638', label: 'প্রধান হটলাইন', type: 'primary', isPrimary: true },
-      { id: 'phone-2', number: base.whatsapp || '8801867841638', label: 'হোয়াটসঅ্যাপ হেল্পলাইন', type: 'whatsapp', isPrimary: false }
+      { id: 'phone-1', number: '01867841638', label: 'কল হটলাইন', type: 'primary', isPrimary: true, notes: 'সকাল ৯টা - রাত ১১টা' },
+      { id: 'phone-2', number: '8801867841638', label: 'হোয়াটসঅ্যাপ হেল্পলাইন', type: 'whatsapp', isPrimary: false, notes: 'https://wa.me/8801867841638' }
     ];
   }
 
   // 2. Email addresses migration/normalization
   if (!base.emailAddresses || !Array.isArray(base.emailAddresses) || base.emailAddresses.length === 0) {
     base.emailAddresses = [
-      { id: 'email-1', email: base.email || 'jihanstore009@gmail.com', label: 'প্রধান সাপোর্ট ইমেইল', isPrimary: true }
+      { id: 'email-1', email: 'jihanstore009@gmail.com', label: 'প্রধান সাপোর্ট ইমেইল', isPrimary: true },
+      { id: 'email-2', email: 'jihanstoreofficial009@gmail.com', label: 'অফিসিয়াল ব্যবসায়িক ইমেইল', isPrimary: false }
     ];
+  } else if (!base.emailAddresses.some(e => e.email.includes('jihanstoreofficial009@gmail.com'))) {
+    base.emailAddresses.push({
+      id: 'email-2',
+      email: 'jihanstoreofficial009@gmail.com',
+      label: 'অফিসিয়াল ব্যবসায়িক ইমেইল',
+      isPrimary: false
+    });
   }
 
   // 3. Social links migration/normalization
   if (!base.socialLinks || !Array.isArray(base.socialLinks) || base.socialLinks.length === 0) {
     base.socialLinks = [
-      { id: 'soc-1', platform: 'facebook', platformName: 'Facebook Page', url: base.socialFacebook || 'https://www.facebook.com/jihanstore009', enabled: true },
-      { id: 'soc-2', platform: 'instagram', platformName: 'Instagram Profile', url: base.socialInstagram || 'https://www.instagram.com/jihan.store009', enabled: true },
-      { id: 'soc-3', platform: 'tiktok', platformName: 'TikTok Account', url: base.socialTiktok || 'https://www.tiktok.com/@jihanstore009', enabled: true },
-      { id: 'soc-4', platform: 'youtube', platformName: 'YouTube Channel', url: '', enabled: false },
-      { id: 'soc-5', platform: 'telegram', platformName: 'Telegram Channel', url: base.socialTelegram || 'https://t.me/jihanstore009', enabled: true },
-      { id: 'soc-6', platform: 'whatsapp', platformName: 'WhatsApp Community', url: base.socialWhatsapp || 'https://wa.me/8801867841638', enabled: true }
+      { id: 'soc-1', platform: 'facebook', platformName: 'ফেসবুক পেজ', platformNameEn: 'Facebook Page', url: 'https://www.facebook.com/jihanstore009', enabled: true, language: 'both' },
+      { id: 'soc-2', platform: 'instagram', platformName: 'ইনস্টাগ্রাম', platformNameEn: 'Instagram Profile', url: 'https://www.instagram.com/jihan.store009', enabled: true, language: 'both' },
+      { id: 'soc-3', platform: 'tiktok', platformName: 'টিকটক', platformNameEn: 'TikTok Account', url: 'https://www.tiktok.com/@jihanstore009', enabled: true, language: 'both' },
+      { id: 'soc-4', platform: 'telegram', platformName: 'টেলিগ্রাম চ্যানেল', platformNameEn: 'Telegram Channel', url: 'https://t.me/jihanstorebd009', enabled: true, language: 'both' },
+      { id: 'soc-5', platform: 'whatsapp', platformName: 'হোয়াটসঅ্যাপ কমিউনিটি', platformNameEn: 'WhatsApp Community', url: 'https://wa.me/8801867841638', enabled: true, language: 'both' }
     ];
+  } else {
+    // Populate multilingual names if absent
+    base.socialLinks = base.socialLinks.map(s => {
+      const bnNames: Record<string, string> = {
+        facebook: 'ফেসবুক পেজ',
+        instagram: 'ইনস্টাগ্রাম',
+        tiktok: 'টিকটক',
+        telegram: 'টেলিগ্রাম চ্যানেল',
+        whatsapp: 'হোয়াটসঅ্যাপ কমিউনিটি',
+        youtube: 'ইউটিউব চ্যানেল',
+        website: 'অফিসিয়াল ওয়েবসাইট'
+      };
+      const enNames: Record<string, string> = {
+        facebook: 'Facebook Page',
+        instagram: 'Instagram Profile',
+        tiktok: 'TikTok Account',
+        telegram: 'Telegram Channel',
+        whatsapp: 'WhatsApp Community',
+        youtube: 'YouTube Channel',
+        website: 'Official Website'
+      };
+      return {
+        ...s,
+        platformName: s.platformName || bnNames[s.platform] || s.platform,
+        platformNameEn: s.platformNameEn || enNames[s.platform] || s.platform,
+        language: s.language || 'both'
+      };
+    });
+
+    // Update links to latest active links
+    const tele = base.socialLinks.find(s => s.platform === 'telegram');
+    if (tele) {
+      tele.url = 'https://t.me/jihanstorebd009';
+      base.socialTelegram = 'https://t.me/jihanstorebd009';
+    }
+    const tt = base.socialLinks.find(s => s.platform === 'tiktok');
+    if (tt && (!tt.url || tt.url.includes('example'))) {
+      tt.url = 'https://www.tiktok.com/@jihanstore009';
+      base.socialTiktok = 'https://www.tiktok.com/@jihanstore009';
+    }
+    const fb = base.socialLinks.find(s => s.platform === 'facebook');
+    if (fb && (!fb.url || fb.url.includes('example'))) {
+      fb.url = 'https://www.facebook.com/jihanstore009';
+      base.socialFacebook = 'https://www.facebook.com/jihanstore009';
+    }
+    const ig = base.socialLinks.find(s => s.platform === 'instagram');
+    if (ig && (!ig.url || ig.url.includes('example'))) {
+      ig.url = 'https://www.instagram.com/jihan.store009';
+      base.socialInstagram = 'https://www.instagram.com/jihan.store009';
+    }
   }
 
   // 4. Payment accounts migration/normalization
@@ -506,6 +572,14 @@ export async function initializeStoreData() {
     if (adsSnap.empty) {
       for (const ad of INITIAL_ADS) {
         await setDoc(doc(db, 'advertisements', ad.id), ad);
+      }
+    }
+
+    // 6. Reviews check
+    const revSnap = await getDocs(collection(db, 'reviews'));
+    if (revSnap.empty) {
+      for (const rev of INITIAL_REVIEWS) {
+        await setDoc(doc(db, 'reviews', rev.id), rev);
       }
     }
   } catch (err) {
@@ -907,17 +981,56 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus, pa
 }
 
 // Reviews
+export const INITIAL_REVIEWS: Review[] = [
+  {
+    id: 'rev-1',
+    productId: 'prod-1',
+    productName: 'T900 Ultra 2 Big Display Bluetooth Calling Smartwatch',
+    customerName: 'তানভীর আহমেদ (সন্দ্বীপ)',
+    rating: 5,
+    comment: 'অসাধারণ কোয়ালিটি! সন্দ্বীপে মাত্র ১ দিনে ফ্রি ডেলিভারি পেয়েছি। কলিং এবং ডিসপ্লে অনেক স্মুথ।',
+    status: 'approved',
+    createdAt: new Date(Date.now() - 86400000 * 2).toISOString()
+  },
+  {
+    id: 'rev-2',
+    productId: 'prod-2',
+    productName: 'Pro 2nd Gen Wireless Earbuds with ANC & Spatial Audio',
+    customerName: 'মেহেদী হাসান',
+    rating: 5,
+    comment: 'সাউন্ড বেজ খুব ক্লিয়ার, ব্যাটারি ব্যাকআপ দারুণ। প্যাকেজিং অনেক ভালো ছিল।',
+    status: 'approved',
+    createdAt: new Date(Date.now() - 86400000 * 4).toISOString()
+  },
+  {
+    id: 'rev-3',
+    productId: 'prod-1',
+    productName: 'T900 Ultra 2 Big Display Bluetooth Calling Smartwatch',
+    customerName: 'রাকিবুল ইসলাম',
+    rating: 4,
+    comment: 'ভালো প্রোডাক্ট, দাম অনুযায়ী পারফেক্ট সার্ভিস।',
+    status: 'approved',
+    createdAt: new Date(Date.now() - 86400000 * 6).toISOString()
+  }
+];
+
 export async function addProductReview(review: Omit<Review, 'id' | 'createdAt' | 'status'>): Promise<Review> {
   const newReview: Review = {
     ...review,
     id: 'rev-' + Date.now(),
-    status: 'approved', // instant gratification, admin can moderate
+    status: 'approved', // default approved, admin has total hide/delete control
     createdAt: new Date().toISOString()
   };
   try {
     await setDoc(doc(db, 'reviews', newReview.id), newReview);
   } catch (err) {
     console.warn('Review saved locally:', err);
+    try {
+      const existing = JSON.parse(localStorage.getItem('jihan_store_reviews') || '[]');
+      localStorage.setItem('jihan_store_reviews', JSON.stringify([newReview, ...existing]));
+    } catch {
+      // Ignore
+    }
   }
   return newReview;
 }
@@ -929,13 +1042,76 @@ export function subscribeToReviews(productId: string, callback: (reviews: Review
       const items = snapshot.docs
         .map(d => ({ id: d.id, ...d.data() } as Review))
         .filter(r => r.productId === productId && r.status === 'approved');
-      callback(items);
+      if (items.length > 0) {
+        callback(items);
+      } else {
+        const fallbacks = INITIAL_REVIEWS.filter(r => r.productId === productId && r.status === 'approved');
+        callback(fallbacks);
+      }
     }, () => {
-      callback([]);
+      const fallbacks = INITIAL_REVIEWS.filter(r => r.productId === productId && r.status === 'approved');
+      callback(fallbacks);
     });
   } catch (err) {
-    callback([]);
+    const fallbacks = INITIAL_REVIEWS.filter(r => r.productId === productId && r.status === 'approved');
+    callback(fallbacks);
     return () => {};
+  }
+}
+
+export function subscribeToAllReviews(callback: (reviews: Review[]) => void) {
+  try {
+    const colRef = collection(db, 'reviews');
+    return onSnapshot(colRef, (snapshot) => {
+      const items = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Review));
+      items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      if (items.length > 0) {
+        callback(items);
+      } else {
+        callback(INITIAL_REVIEWS);
+      }
+    }, (err) => {
+      console.warn('Reviews subscription notice:', err);
+      try {
+        const local = JSON.parse(localStorage.getItem('jihan_store_reviews') || '[]');
+        callback(local.length > 0 ? local : INITIAL_REVIEWS);
+      } catch {
+        callback(INITIAL_REVIEWS);
+      }
+    });
+  } catch (err) {
+    callback(INITIAL_REVIEWS);
+    return () => {};
+  }
+}
+
+export async function updateReviewStatus(reviewId: string, status: 'approved' | 'hidden' | 'pending'): Promise<void> {
+  try {
+    await updateDoc(doc(db, 'reviews', reviewId), { status });
+  } catch (err) {
+    console.warn('Review status update locally:', err);
+    try {
+      const existing: Review[] = JSON.parse(localStorage.getItem('jihan_store_reviews') || JSON.stringify(INITIAL_REVIEWS));
+      const updated = existing.map(r => r.id === reviewId ? { ...r, status } : r);
+      localStorage.setItem('jihan_store_reviews', JSON.stringify(updated));
+    } catch {
+      // Ignore
+    }
+  }
+}
+
+export async function deleteReview(reviewId: string): Promise<void> {
+  try {
+    await deleteDoc(doc(db, 'reviews', reviewId));
+  } catch (err) {
+    console.warn('Review delete locally:', err);
+    try {
+      const existing: Review[] = JSON.parse(localStorage.getItem('jihan_store_reviews') || JSON.stringify(INITIAL_REVIEWS));
+      const filtered = existing.filter(r => r.id !== reviewId);
+      localStorage.setItem('jihan_store_reviews', JSON.stringify(filtered));
+    } catch {
+      // Ignore
+    }
   }
 }
 

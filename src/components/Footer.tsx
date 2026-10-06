@@ -239,7 +239,7 @@ export const Footer: React.FC<FooterProps> = ({
               <div className="flex items-center gap-2">
                 <Phone className="w-4 h-4 text-amber-400 shrink-0" />
                 <a href={`tel:${settings.phone}`} className="hover:text-white font-semibold">
-                  {settings.phone}
+                  কল করুন: {settings.phone}
                 </a>
               </div>
               <div className="flex items-center gap-2">
@@ -253,11 +253,18 @@ export const Footer: React.FC<FooterProps> = ({
                   হোয়াটসঅ্যাপ: {settings.whatsapp}
                 </a>
               </div>
-              <div className="flex items-center gap-2">
-                <Mail className="w-4 h-4 text-amber-400 shrink-0" />
-                <a href={`mailto:${settings.email}`} className="hover:text-white">
-                  {settings.email}
-                </a>
+              <div className="space-y-1">
+                <div className="flex items-center gap-2">
+                  <Mail className="w-4 h-4 text-amber-400 shrink-0" />
+                  <a href={`mailto:${settings.email}`} className="hover:text-white font-medium">
+                    {settings.email}
+                  </a>
+                </div>
+                <div className="flex items-center gap-2 pl-6">
+                  <a href="mailto:jihanstoreofficial009@gmail.com" className="text-slate-400 hover:text-white text-[11px]">
+                    jihanstoreofficial009@gmail.com
+                  </a>
+                </div>
               </div>
 
               {/* Extra configured addresses/contacts */}

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { 
   ShoppingBag, 
   Search, 
@@ -11,7 +11,11 @@ import {
   Menu, 
   X, 
   MessageSquare,
-  Sparkles
+  Sparkles,
+  LogIn,
+  UserPlus,
+  LogOut,
+  ChevronDown
 } from 'lucide-react';
 import { useSettings } from '../context/SettingsContext';
 import { useCart } from '../context/CartContext';
@@ -23,6 +27,9 @@ interface HeaderProps {
   onOpenTracking: () => void;
   onOpenSupport: () => void;
   onOpenAdmin: () => void;
+  onOpenLogin: () => void;
+  onOpenRegister: () => void;
+  onOpenCustomerAccount: (tab?: 'profile' | 'orders') => void;
   onSelectCategory: (categoryName: string) => void;
   onSelectProduct: (product: Product) => void;
   onGoHome: () => void;
@@ -35,6 +42,9 @@ export const Header: React.FC<HeaderProps> = ({
   onOpenTracking,
   onOpenSupport,
   onOpenAdmin,
+  onOpenLogin,
+  onOpenRegister,
+  onOpenCustomerAccount,
   onSelectCategory,
   onSelectProduct,
   onGoHome,
@@ -43,9 +53,22 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const { settings, categories } = useSettings();
   const { totalItems } = useCart();
-  const { isAdmin } = useAuth();
+  const { currentUser, userProfile, isAdmin, logout } = useAuth();
   const [searchQuery, setSearchQuery] = useState('');
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [userDropdownOpen, setUserDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+        setUserDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   // Search filtered items
   const searchResults = searchQuery.trim().length > 1 
@@ -55,6 +78,8 @@ export const Header: React.FC<HeaderProps> = ({
         p.description.toLowerCase().includes(searchQuery.toLowerCase())
       ).slice(0, 5)
     : [];
+
+  const displayName = userProfile?.displayName || currentUser?.displayName || currentUser?.email?.split('@')[0] || 'কাস্টমার';
 
   return (
     <header className="sticky top-0 z-40 bg-white shadow-xs border-b border-slate-100">
@@ -72,7 +97,7 @@ export const Header: React.FC<HeaderProps> = ({
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
+          <div className="flex items-center gap-3 sm:gap-4">
             <a 
               href={`tel:${settings.phone}`} 
               className="flex items-center gap-1 hover:text-white transition-colors"
@@ -80,6 +105,7 @@ export const Header: React.FC<HeaderProps> = ({
               <Phone className="w-3.5 h-3.5 text-amber-400" />
               <span className="font-semibold">{settings.phone}</span>
             </a>
+
             <button 
               id="header-track-btn"
               onClick={onOpenTracking}
@@ -88,6 +114,7 @@ export const Header: React.FC<HeaderProps> = ({
               <Clock className="w-3.5 h-3.5" />
               <span>অর্ডার ট্র্যাক</span>
             </button>
+
             <button
               id="header-admin-link"
               onClick={onOpenAdmin}
@@ -148,7 +175,7 @@ export const Header: React.FC<HeaderProps> = ({
               {searchQuery && (
                 <button 
                   onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 text-xs cursor-pointer"
                 >
                   <X className="w-3.5 h-3.5" />
                 </button>
@@ -188,13 +215,13 @@ export const Header: React.FC<HeaderProps> = ({
             )}
           </div>
 
-          {/* Action Icons */}
+          {/* Action Icons & Customer Auth Buttons */}
           <div className="flex items-center gap-2 sm:gap-3">
             {/* Live Support Chat Button */}
             <button
               id="header-support-btn"
               onClick={onOpenSupport}
-              className="relative p-2 sm:px-3 sm:py-2 text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-xl transition-colors flex items-center gap-1.5"
+              className="relative p-2 sm:px-3 sm:py-2 text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-xl transition-colors flex items-center gap-1.5 cursor-pointer"
               title="কাস্টমার সাপোর্ট চ্যাট"
             >
               <MessageSquare className="w-5 h-5 text-blue-700" />
@@ -202,11 +229,106 @@ export const Header: React.FC<HeaderProps> = ({
               <span className="w-2 h-2 rounded-full bg-emerald-500 absolute top-2 right-2 animate-pulse" />
             </button>
 
+            {/* Customer Authentication Buttons or Logged-in User Account Profile */}
+            {currentUser ? (
+              <div className="relative" ref={dropdownRef}>
+                <button
+                  id="header-customer-profile-btn"
+                  onClick={() => setUserDropdownOpen(!userDropdownOpen)}
+                  className="flex items-center gap-2 p-1.5 sm:px-3 sm:py-1.5 rounded-xl bg-slate-50 hover:bg-blue-50 border border-slate-200 hover:border-blue-200 transition-all text-slate-800 group cursor-pointer"
+                  title="আমার অ্যাকাউন্ট"
+                >
+                  <div className="w-7 h-7 rounded-lg bg-gradient-to-br from-blue-700 to-blue-900 text-amber-300 font-bold flex items-center justify-center text-xs shadow-xs">
+                    {displayName[0]?.toUpperCase() || 'U'}
+                  </div>
+                  <div className="hidden md:flex flex-col text-left">
+                    <span className="text-xs font-bold text-slate-800 group-hover:text-blue-700 transition-colors line-clamp-1 max-w-[100px]">
+                      {displayName}
+                    </span>
+                    <span className="text-[10px] text-amber-600 font-semibold leading-none">
+                      আমার অ্যাকাউন্ট
+                    </span>
+                  </div>
+                  <ChevronDown className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-700 transition-colors hidden sm:inline" />
+                </button>
+
+                {/* Account Dropdown Menu */}
+                {userDropdownOpen && (
+                  <div className="absolute right-0 top-full mt-2 w-56 bg-white border border-slate-200 rounded-2xl shadow-xl z-50 p-2 space-y-1 animate-in zoom-in-95 duration-100">
+                    <div className="px-3 py-2 border-b border-slate-100 mb-1">
+                      <p className="text-xs font-black text-slate-900 line-clamp-1">{displayName}</p>
+                      <p className="text-[11px] text-slate-500 truncate">{currentUser.email}</p>
+                    </div>
+
+                    <button
+                      type="button"
+                      id="menu-open-profile"
+                      onClick={() => {
+                        setUserDropdownOpen(false);
+                        onOpenCustomerAccount('profile');
+                      }}
+                      className="w-full text-left px-3 py-2 text-xs font-bold text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-xl flex items-center gap-2.5 transition-colors cursor-pointer"
+                    >
+                      <User className="w-4 h-4 text-blue-600" />
+                      <span>প্রোফাইল ও ঠিকানা</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      id="menu-open-orders"
+                      onClick={() => {
+                        setUserDropdownOpen(false);
+                        onOpenCustomerAccount('orders');
+                      }}
+                      className="w-full text-left px-3 py-2 text-xs font-bold text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-xl flex items-center gap-2.5 transition-colors cursor-pointer"
+                    >
+                      <ShoppingBag className="w-4 h-4 text-amber-600" />
+                      <span>আমার অর্ডারসমূহ</span>
+                    </button>
+
+                    <div className="pt-1 border-t border-slate-100 mt-1">
+                      <button
+                        type="button"
+                        id="menu-customer-logout"
+                        onClick={async () => {
+                          setUserDropdownOpen(false);
+                          await logout();
+                        }}
+                        className="w-full text-left px-3 py-2 text-xs font-bold text-rose-600 hover:bg-rose-50 rounded-xl flex items-center gap-2.5 transition-colors cursor-pointer"
+                      >
+                        <LogOut className="w-4 h-4 text-rose-500" />
+                        <span>লগআউট করুন</span>
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div className="hidden sm:flex items-center gap-1.5">
+                <button
+                  id="header-login-btn"
+                  onClick={onOpenLogin}
+                  className="px-3 py-1.5 text-xs font-bold text-slate-700 hover:text-blue-700 hover:bg-blue-50 rounded-xl transition-colors flex items-center gap-1 cursor-pointer"
+                >
+                  <LogIn className="w-3.5 h-3.5 text-blue-700" />
+                  <span>লগইন</span>
+                </button>
+                <button
+                  id="header-register-btn"
+                  onClick={onOpenRegister}
+                  className="px-3 py-1.5 text-xs font-bold bg-amber-400 hover:bg-amber-500 text-slate-950 rounded-xl transition-all shadow-xs flex items-center gap-1 cursor-pointer"
+                >
+                  <UserPlus className="w-3.5 h-3.5" />
+                  <span>সাইন আপ</span>
+                </button>
+              </div>
+            )}
+
             {/* Cart Button */}
             <button
               id="header-cart-btn"
               onClick={onOpenCart}
-              className="relative flex items-center gap-2 bg-gradient-to-r from-blue-700 to-blue-800 hover:from-blue-800 hover:to-blue-900 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold text-xs sm:text-sm shadow-md shadow-blue-700/20 active:scale-95 transition-all"
+              className="relative flex items-center gap-2 bg-gradient-to-r from-blue-700 to-blue-800 hover:from-blue-800 hover:to-blue-900 text-white px-3 sm:px-4 py-2 rounded-xl font-semibold text-xs sm:text-sm shadow-md shadow-blue-700/20 active:scale-95 transition-all cursor-pointer"
             >
               <ShoppingBag className="w-4 h-4 text-amber-300" />
               <span className="hidden sm:inline">কার্ট</span>
@@ -219,7 +341,7 @@ export const Header: React.FC<HeaderProps> = ({
             <button
               id="header-mobile-menu-btn"
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="sm:hidden p-2 text-slate-700 hover:bg-slate-100 rounded-xl"
+              className="sm:hidden p-2 text-slate-700 hover:bg-slate-100 rounded-xl cursor-pointer"
               aria-label="Toggle Navigation Menu"
             >
               {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
@@ -267,7 +389,7 @@ export const Header: React.FC<HeaderProps> = ({
           <button
             id="cat-pill-all"
             onClick={() => onSelectCategory('all')}
-            className={`px-3 py-1.5 rounded-full transition-colors ${
+            className={`px-3 py-1.5 rounded-full transition-colors cursor-pointer ${
               currentView === 'home' 
                 ? 'bg-blue-700 text-white font-semibold shadow-xs' 
                 : 'bg-white hover:bg-slate-200 text-slate-700 border border-slate-200/70'
@@ -280,7 +402,7 @@ export const Header: React.FC<HeaderProps> = ({
               key={cat.id}
               id={`cat-pill-${cat.slug}`}
               onClick={() => onSelectCategory(cat.name)}
-              className="px-3 py-1.5 rounded-full bg-white hover:bg-slate-200 text-slate-700 border border-slate-200/70 transition-colors"
+              className="px-3 py-1.5 rounded-full bg-white hover:bg-slate-200 text-slate-700 border border-slate-200/70 transition-colors cursor-pointer"
             >
               {cat.name}
             </button>
@@ -291,34 +413,110 @@ export const Header: React.FC<HeaderProps> = ({
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
         <div className="sm:hidden border-t border-slate-200 bg-white p-4 space-y-3 animate-in slide-in-from-top duration-150">
+          {/* Customer Auth Bar inside mobile menu */}
+          {currentUser ? (
+            <div className="p-3 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-100 rounded-2xl flex items-center justify-between">
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-blue-700 text-amber-300 font-black flex items-center justify-center text-sm">
+                  {displayName[0]?.toUpperCase() || 'U'}
+                </div>
+                <div>
+                  <p className="text-xs font-black text-slate-900">{displayName}</p>
+                  <p className="text-[11px] text-slate-500 truncate max-w-[150px]">{currentUser.email}</p>
+                </div>
+              </div>
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenCustomerAccount('profile');
+                }}
+                className="px-2.5 py-1 text-[11px] bg-blue-700 text-white font-bold rounded-lg"
+              >
+                প্রোফাইল
+              </button>
+            </div>
+          ) : (
+            <div className="grid grid-cols-2 gap-2 pb-2">
+              <button
+                id="mobile-login-btn"
+                onClick={() => { setMobileMenuOpen(false); onOpenLogin(); }}
+                className="py-2.5 px-3 bg-blue-50 text-blue-700 border border-blue-200 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5"
+              >
+                <LogIn className="w-4 h-4 text-blue-700" />
+                <span>লগইন করুন</span>
+              </button>
+              <button
+                id="mobile-register-btn"
+                onClick={() => { setMobileMenuOpen(false); onOpenRegister(); }}
+                className="py-2.5 px-3 bg-amber-400 hover:bg-amber-500 text-slate-950 rounded-xl text-xs font-bold flex items-center justify-center gap-1.5 shadow-xs"
+              >
+                <UserPlus className="w-4 h-4" />
+                <span>নতুন অ্যাকাউন্ট</span>
+              </button>
+            </div>
+          )}
+
           <div className="space-y-1">
             <button
               onClick={() => { onGoHome(); setMobileMenuOpen(false); }}
-              className="w-full text-left px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 rounded-lg"
+              className="w-full text-left px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 rounded-lg cursor-pointer"
             >
               হোম পেজ
             </button>
+
+            {currentUser && (
+              <>
+                <button
+                  onClick={() => { onOpenCustomerAccount('orders'); setMobileMenuOpen(false); }}
+                  className="w-full text-left px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 rounded-lg flex items-center justify-between cursor-pointer"
+                >
+                  <span>আমার অর্ডারসমূহ</span>
+                  <ShoppingBag className="w-4 h-4 text-amber-500" />
+                </button>
+                <button
+                  onClick={() => { onOpenCustomerAccount('profile'); setMobileMenuOpen(false); }}
+                  className="w-full text-left px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 rounded-lg flex items-center justify-between cursor-pointer"
+                >
+                  <span>প্রোফাইল ও ঠিকানা</span>
+                  <User className="w-4 h-4 text-blue-600" />
+                </button>
+              </>
+            )}
+
             <button
               onClick={() => { onOpenTracking(); setMobileMenuOpen(false); }}
-              className="w-full text-left px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 rounded-lg flex items-center justify-between"
+              className="w-full text-left px-3 py-2 text-sm font-semibold text-slate-800 hover:bg-slate-50 rounded-lg flex items-center justify-between cursor-pointer"
             >
               <span>অর্ডার ট্র্যাকিং</span>
               <Clock className="w-4 h-4 text-amber-500" />
             </button>
             <button
               onClick={() => { onOpenSupport(); setMobileMenuOpen(false); }}
-              className="w-full text-left px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50 rounded-lg flex items-center justify-between"
+              className="w-full text-left px-3 py-2 text-sm font-semibold text-blue-700 hover:bg-blue-50 rounded-lg flex items-center justify-between cursor-pointer"
             >
               <span>লাইভ কাস্টমার চ্যাট</span>
               <MessageSquare className="w-4 h-4 text-blue-700" />
             </button>
             <button
               onClick={() => { onOpenAdmin(); setMobileMenuOpen(false); }}
-              className="w-full text-left px-3 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-50 rounded-lg flex items-center justify-between"
+              className="w-full text-left px-3 py-2 text-sm font-semibold text-amber-700 hover:bg-amber-50 rounded-lg flex items-center justify-between cursor-pointer"
             >
               <span>{isAdmin ? 'অ্যাডমিন ড্যাশবোর্ড' : 'অ্যাডমিন লগইন'}</span>
               <ShieldCheck className="w-4 h-4 text-amber-600" />
             </button>
+
+            {currentUser && (
+              <button
+                onClick={async () => {
+                  setMobileMenuOpen(false);
+                  await logout();
+                }}
+                className="w-full text-left px-3 py-2 text-sm font-semibold text-rose-600 hover:bg-rose-50 rounded-lg flex items-center justify-between cursor-pointer"
+              >
+                <span>লগআউট</span>
+                <LogOut className="w-4 h-4 text-rose-500" />
+              </button>
+            )}
           </div>
           <div className="pt-2 border-t border-slate-100 text-xs text-slate-500">
             <p className="font-semibold text-slate-700">{settings.businessName}</p>

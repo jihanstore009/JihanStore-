@@ -20,7 +20,10 @@ import {
   Clock,
   CheckCircle2,
   ChevronRight,
-  Sparkles
+  Sparkles,
+  Download,
+  FileSpreadsheet,
+  FileCode
 } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useSettings } from '../context/SettingsContext';
@@ -105,6 +108,81 @@ export const AdminApp: React.FC<AdminAppProps> = ({ onSwitchToCustomer }) => {
     { id: 'diagnostics', label: 'কানেকশন টেস্ট', icon: Activity },
   ];
 
+  const handleDownloadAdminCSV = () => {
+    if (!isAdmin) return;
+    const adminData = [
+      ['Field / Property', 'Value'],
+      ['Admin Name', userProfile?.displayName || currentUser?.displayName || 'Jihan Store Administrator'],
+      ['Email', userProfile?.email || currentUser?.email || 'jihanstore009@gmail.com'],
+      ['Phone Number', userProfile?.phoneNumber || settings.phone || '01867841638'],
+      ['Role', 'Admin (Full Management Privileges)'],
+      ['Account Status', 'Active & Verified'],
+      ['Store Name', settings.name || 'Jihan Store – জিহান স্টোর'],
+      ['Store Address', settings.address || 'Postcode 4301, Sandwip, Chittagong, Bangladesh'],
+      ['Delivery Inside Sandwip', settings.deliveryInsideSandwip === 0 ? 'Free (৳0)' : `৳${settings.deliveryInsideSandwip}`],
+      ['Delivery Outside Sandwip', `৳${settings.deliveryOutsideSandwip}`],
+      ['Total Active Zones', (settings.deliveryZones || []).filter(z => z.enabled).length],
+      ['Total Products', products.length],
+      ['Total Orders', orders.length],
+      ['Export Timestamp', new Date().toLocaleString()]
+    ];
+
+    const csvContent = '\uFEFF' + adminData.map(row => `"${row[0]}","${String(row[1]).replace(/"/g, '""')}"`).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `jihan_store_admin_file_${new Date().toISOString().slice(0, 10)}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
+  const handleDownloadAdminJSON = () => {
+    if (!isAdmin) return;
+    const adminData = {
+      adminProfile: {
+        adminName: userProfile?.displayName || currentUser?.displayName || 'Jihan Store Administrator',
+        email: userProfile?.email || currentUser?.email || 'jihanstore009@gmail.com',
+        phoneNumber: userProfile?.phoneNumber || settings.phone || '01867841638',
+        role: 'admin',
+        accountStatus: 'Active',
+        authenticatedUid: currentUser?.uid || 'admin_user'
+      },
+      storeSettingsProfile: {
+        storeName: settings.name,
+        businessName: settings.businessName,
+        address: settings.address,
+        helplinePhone: settings.phone,
+        whatsappNumber: settings.whatsapp,
+        supportEmail: settings.email,
+        officialEmail: 'jihanstoreofficial009@gmail.com',
+        deliveryInsideSandwipBDT: settings.deliveryInsideSandwip,
+        deliveryOutsideSandwipBDT: settings.deliveryOutsideSandwip,
+        deliveryZones: (settings.deliveryZones || []).map(z => ({
+          name: z.name,
+          chargeBDT: z.charge,
+          isInsideSandwip: z.isInsideSandwip,
+          enabled: z.enabled
+        }))
+      },
+      operationalSummary: {
+        totalProductsCataloged: products.length,
+        totalOrdersReceived: orders.length,
+        totalRevenueBDT: totalRevenue,
+        pendingOrdersCount: pendingOrders.length,
+        exportTimestamp: new Date().toISOString()
+      }
+    };
+
+    const blob = new Blob([JSON.stringify(adminData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = `jihan_store_admin_file_${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   const handleOpenCustomerWebsite = () => {
     if (onSwitchToCustomer) {
       onSwitchToCustomer();
@@ -153,6 +231,30 @@ export const AdminApp: React.FC<AdminAppProps> = ({ onSwitchToCustomer }) => {
             <div className="hidden sm:flex items-center gap-1.5 px-3 py-1 bg-emerald-500/10 border border-emerald-500/20 rounded-full text-emerald-400 text-xs font-semibold">
               <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
               <span>ডাটাবেজ লাইভ সিঙ্ক</span>
+            </div>
+
+            {/* Download Admin File Buttons */}
+            <div className="hidden md:flex items-center gap-1.5">
+              <button
+                type="button"
+                id="header-download-admin-csv-btn"
+                onClick={handleDownloadAdminCSV}
+                className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-amber-300 border border-amber-400/30 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                title="Download Admin File (CSV)"
+              >
+                <FileSpreadsheet className="w-3.5 h-3.5" />
+                <span>Admin CSV</span>
+              </button>
+              <button
+                type="button"
+                id="header-download-admin-json-btn"
+                onClick={handleDownloadAdminJSON}
+                className="px-2.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-sky-300 border border-sky-400/30 rounded-xl text-xs font-bold transition-all flex items-center gap-1 cursor-pointer"
+                title="Download Admin File (JSON)"
+              >
+                <FileCode className="w-3.5 h-3.5" />
+                <span>Admin JSON</span>
+              </button>
             </div>
 
             {/* View Customer Website button */}
@@ -368,7 +470,51 @@ export const AdminApp: React.FC<AdminAppProps> = ({ onSwitchToCustomer }) => {
                 </div>
               </div>
 
-              {/* Recent Orders Preview */}
+              {/* Download Admin File Card */}
+              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-3">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2">
+                      <Download className="w-4 h-4 text-amber-600" />
+                      <h4 className="font-black text-sm text-slate-900 uppercase tracking-wider">
+                        Download Admin File / এডমিন ডাটা ডাউনলোড
+                      </h4>
+                    </div>
+                    <p className="text-xs text-slate-500 mt-0.5">
+                      এডমিন প্রোফাইল, রোল, স্টোর সেটিংস ও সিস্টেম মেট্রিক্স নিরাপদে CSV বা JSON ফরম্যাটে ব্যাকআপ নিন
+                    </p>
+                  </div>
+
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <button
+                      type="button"
+                      id="dashboard-download-admin-csv-btn"
+                      onClick={handleDownloadAdminCSV}
+                      className="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-slate-950 font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                    >
+                      <FileSpreadsheet className="w-4 h-4" />
+                      <span>Download Admin File (CSV)</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      id="dashboard-download-admin-json-btn"
+                      onClick={handleDownloadAdminJSON}
+                      className="px-3.5 py-2 bg-slate-900 hover:bg-slate-800 text-white font-bold rounded-xl text-xs flex items-center gap-1.5 shadow-xs transition-colors cursor-pointer"
+                    >
+                      <FileCode className="w-4 h-4 text-sky-400" />
+                      <span>Download Admin File (JSON)</span>
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1.5 text-[11px] text-slate-500 border-t border-slate-100 pt-2.5">
+                  <ShieldCheck className="w-4 h-4 text-emerald-600 shrink-0" />
+                  <span>
+                    নিরাপত্তা নিশ্চয়তা: কোনো পাসওয়ার্ড, এক্সেস টোকেন বা এপিআই কী এক্সপোর্টে অন্তর্ভুক্ত করা হয় না।
+                  </span>
+                </div>
+              </div>
               <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
                 <div className="flex items-center justify-between border-b border-slate-100 pb-3">
                   <h3 className="font-black text-sm text-slate-900 flex items-center gap-2">

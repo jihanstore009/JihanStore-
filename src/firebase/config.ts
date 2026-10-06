@@ -5,6 +5,8 @@ import {
   createUserWithEmailAndPassword, 
   signOut as fbSignOut, 
   onAuthStateChanged,
+  sendPasswordResetEmail,
+  updateProfile as fbUpdateProfile,
   User 
 } from 'firebase/auth';
 import { 
@@ -183,6 +185,8 @@ export async function uploadMedia(
 export {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
+  fbUpdateProfile,
   fbSignOut,
   onAuthStateChanged,
   collection,

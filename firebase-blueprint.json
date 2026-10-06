@@ -6,11 +6,15 @@
       "type": "object",
       "properties": {
         "id": { "type": "string" },
+        "uid": { "type": "string" },
         "email": { "type": "string" },
         "displayName": { "type": "string" },
         "phoneNumber": { "type": "string" },
+        "address": { "type": "string" },
+        "deliveryArea": { "type": "string", "enum": ["inside_sandwip", "outside_sandwip"] },
         "role": { "type": "string", "enum": ["customer", "admin"] },
-        "createdAt": { "type": "string" }
+        "createdAt": { "type": "string" },
+        "updatedAt": { "type": "string" }
       },
       "required": ["email", "role"]
     },

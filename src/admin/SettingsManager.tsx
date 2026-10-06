@@ -30,6 +30,7 @@ import {
 import { useSettings } from '../context/SettingsContext';
 import { 
   StoreSettings, 
+  StoreAddress,
   StorePhoneContact, 
   StoreEmailContact, 
   StoreSocialLink, 
@@ -39,7 +40,7 @@ import {
 } from '../types';
 import { uploadMedia } from '../firebase/config';
 
-type SettingsTab = 'general' | 'logo_branding' | 'phones' | 'emails' | 'socials' | 'payments' | 'delivery';
+type SettingsTab = 'general' | 'addresses' | 'phones' | 'emails' | 'socials' | 'payments' | 'delivery' | 'logo_branding';
 
 // BD Phone regex
 const BD_PHONE_REGEX = /^(?:\+?880|0)1[3-9]\d{8}$/;
@@ -87,6 +88,7 @@ export const SettingsManager: React.FC = () => {
   const [logoPreviewBg, setLogoPreviewBg] = useState<'checker' | 'light' | 'dark'>('checker');
 
   // Modal / Item Editor state
+  const [editingAddress, setEditingAddress] = useState<{ isOpen: boolean; isNew: boolean; data: StoreAddress } | null>(null);
   const [editingPhone, setEditingPhone] = useState<{ isOpen: boolean; isNew: boolean; data: StorePhoneContact } | null>(null);
   const [editingEmail, setEditingEmail] = useState<{ isOpen: boolean; isNew: boolean; data: StoreEmailContact } | null>(null);
   const [editingSocial, setEditingSocial] = useState<{ isOpen: boolean; isNew: boolean; data: StoreSocialLink } | null>(null);
@@ -220,6 +222,87 @@ export const SettingsManager: React.FC = () => {
     setSaveSuccess(true);
     setSuccessMessage('লোগো সরানো হয়েছে। ডিফল্ট মনোগ্রাম সক্রিয় করা হয়েছে।');
     setTimeout(() => setSaveSuccess(false), 3000);
+  };
+
+  // ==================== STORE ADDRESSES MANAGEMENT ====================
+  const openAddAddress = () => {
+    setEditingAddress({
+      isOpen: true,
+      isNew: true,
+      data: {
+        id: `addr-${Date.now()}`,
+        title: 'নতুন শাখা / পিকআপ হাব',
+        address: '',
+        phone: form.phone || '01867841638',
+        isPrimary: false,
+        notes: ''
+      }
+    });
+  };
+
+  const handleSaveAddress = (item: StoreAddress) => {
+    if (!item.address.trim()) {
+      setErrorMessage('ঠিকানা খালি রাখা যাবে না।');
+      return;
+    }
+    if (!item.title.trim()) {
+      setErrorMessage('ঠিকানা বা শাখার নাম প্রদান করুন।');
+      return;
+    }
+
+    let list = [...(form.addresses || [])];
+    if (item.isPrimary) {
+      list = list.map(a => ({ ...a, isPrimary: false }));
+    }
+
+    if (editingAddress?.isNew) {
+      list.push(item);
+    } else {
+      list = list.map(a => a.id === item.id ? item : a);
+    }
+
+    if (!list.some(a => a.isPrimary) && list.length > 0) {
+      list[0].isPrimary = true;
+    }
+
+    const primaryAddr = list.find(a => a.isPrimary) || list[0];
+    setForm({
+      ...form,
+      addresses: list,
+      address: primaryAddr.address
+    });
+    setEditingAddress(null);
+    setErrorMessage('');
+  };
+
+  const handleDeleteAddress = (id: string) => {
+    const list = (form.addresses || []).filter(a => a.id !== id);
+    if (list.length === 0) {
+      alert('দোকানের কমপক্ষে একটি ঠিকানা থাকা আবশ্যক।');
+      return;
+    }
+    if (!list.some(a => a.isPrimary)) {
+      list[0].isPrimary = true;
+    }
+    const primaryAddr = list.find(a => a.isPrimary) || list[0];
+    setForm({
+      ...form,
+      addresses: list,
+      address: primaryAddr.address
+    });
+  };
+
+  const handleSetPrimaryAddress = (id: string) => {
+    const list = (form.addresses || []).map(a => ({
+      ...a,
+      isPrimary: a.id === id
+    }));
+    const primaryAddr = list.find(a => a.id === id);
+    setForm({
+      ...form,
+      addresses: list,
+      address: primaryAddr ? primaryAddr.address : form.address
+    });
   };
 
   // ==================== PHONE CONTACTS MANAGEMENT ====================
@@ -657,12 +740,13 @@ export const SettingsManager: React.FC = () => {
       <div className="flex items-center gap-1.5 overflow-x-auto pb-1 border-b border-slate-200 scrollbar-none">
         {[
           { id: 'general', label: '১. সাধারণ তথ্য', icon: Store, count: null },
-          { id: 'logo_branding', label: '২. লোগো ও ব্র্যান্ডিং', icon: ImageIcon, count: null },
+          { id: 'addresses', label: '২. ঠিকানা ও শাখা', icon: MapPin, count: form.addresses?.length || 1 },
           { id: 'phones', label: '৩. ফোন নম্বরসমূহ', icon: Phone, count: form.phoneNumbers?.length || 0 },
           { id: 'emails', label: '৪. ইমেইল ঠিকানা', icon: Mail, count: form.emailAddresses?.length || 0 },
           { id: 'socials', label: '৫. সোশ্যাল মিডিয়া', icon: Globe, count: form.socialLinks?.filter(s => s.enabled).length || 0 },
           { id: 'payments', label: '৬. পেমেন্ট মেথড', icon: CreditCard, count: form.paymentAccounts?.filter(p => p.enabled).length || 0 },
           { id: 'delivery', label: '৭. ডেলিভারি চার্জ', icon: Truck, count: form.deliveryZones?.length || 0 },
+          { id: 'logo_branding', label: '৮. লোগো ও ব্র্যান্ডিং', icon: ImageIcon, count: null },
         ].map((tab) => {
           const Icon = tab.icon;
           const isActive = activeTab === tab.id;
@@ -820,7 +904,124 @@ export const SettingsManager: React.FC = () => {
         </div>
       )}
 
-      {/* ==================== TAB 2: STORE LOGO & BRANDING ==================== */}
+      {/* ==================== TAB 2: STORE ADDRESSES ==================== */}
+      {activeTab === 'addresses' && (
+        <div className="space-y-6">
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-xs space-y-4">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-100 pb-3">
+              <div>
+                <div className="flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-amber-600" />
+                  <h3 className="font-black text-sm text-slate-900 uppercase tracking-wider">
+                    দোকানের পূর্ণ ঠিকানা ও শাখা কার্যালয় ব্যবস্থাপনা
+                  </h3>
+                </div>
+                <p className="text-xs text-slate-500 mt-0.5">
+                  প্রধান কার্যালয়ের ঠিকানা পরিবর্তন করুন, নতুন শাখা অফিস বা পিকআপ হাব যোগ করুন অথবা রিমুভ করুন
+                </p>
+              </div>
+
+              <button
+                type="button"
+                onClick={openAddAddress}
+                className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer self-start sm:self-auto"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ নতুন ঠিকানা যোগ করুন</span>
+              </button>
+            </div>
+
+            {/* List of Addresses */}
+            <div className="space-y-3">
+              {(form.addresses || []).map((addr) => (
+                <div
+                  key={addr.id}
+                  className={`p-4 rounded-xl border flex flex-col sm:flex-row sm:items-start justify-between gap-3 transition-all ${
+                    addr.isPrimary
+                      ? 'bg-amber-50/70 border-amber-300 ring-1 ring-amber-300'
+                      : 'bg-white border-slate-200 hover:border-slate-300'
+                  }`}
+                >
+                  <div className="flex items-start gap-3">
+                    <div className={`w-9 h-9 rounded-xl flex items-center justify-center shrink-0 ${
+                      addr.isPrimary ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-600'
+                    }`}>
+                      <MapPin className="w-4 h-4" />
+                    </div>
+                    <div className="space-y-1">
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <span className="font-bold text-sm text-slate-900">{addr.title}</span>
+                        {addr.isPrimary && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-600 text-white text-[10px] font-black uppercase">
+                            <Star className="w-2.5 h-2.5 fill-current" />
+                            প্রধান ঠিকানা (Primary)
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs sm:text-sm text-slate-800 font-medium leading-relaxed">
+                        {addr.address}
+                      </p>
+                      <div className="flex items-center gap-3 text-xs text-slate-500 flex-wrap pt-0.5">
+                        {addr.phone && (
+                          <span className="flex items-center gap-1 font-mono">
+                            <Phone className="w-3 h-3 text-slate-400" />
+                            {addr.phone}
+                          </span>
+                        )}
+                        {addr.notes && <span>• {addr.notes}</span>}
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center gap-2 self-end sm:self-center shrink-0">
+                    {!addr.isPrimary && (
+                      <button
+                        type="button"
+                        onClick={() => handleSetPrimaryAddress(addr.id)}
+                        className="px-2.5 py-1.5 bg-slate-100 hover:bg-amber-100 text-slate-700 hover:text-amber-800 text-xs font-bold rounded-lg transition"
+                      >
+                        Make Primary
+                      </button>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => setEditingAddress({ isOpen: true, isNew: false, data: { ...addr } })}
+                      className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                      title="Edit Address"
+                    >
+                      <Edit3 className="w-4 h-4" />
+                    </button>
+                    {(form.addresses || []).length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteAddress(addr.id)}
+                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                        title="Delete Address"
+                      >
+                        <Trash2 className="w-4 h-4" />
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="button"
+                onClick={() => handleSave('ঠিকানা তালিকা সফলভাবে সংরক্ষিত হয়েছে!')}
+                disabled={isSaving}
+                className="px-6 py-2.5 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-xl text-xs shadow-md transition-all flex items-center gap-1.5 cursor-pointer"
+              >
+                <Check className="w-3.5 h-3.5" />
+                <span>ঠিকানা তালিকা সংরক্ষণ করুন</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ==================== TAB: STORE LOGO & BRANDING ==================== */}
       {activeTab === 'logo_branding' && (
         <div className="space-y-6">
           
@@ -1716,57 +1917,151 @@ export const SettingsManager: React.FC = () => {
               </div>
             </div>
 
-            {/* Custom Delivery Zones List */}
+            {/* Custom Delivery Zones List & Upazila Controls */}
             <div className="space-y-3 pt-3 border-t border-slate-100">
-              <h4 className="font-bold text-xs text-slate-800 uppercase tracking-wider">
-                সকল ডেলিভারি জোন তালিকা
-              </h4>
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                <div>
+                  <h4 className="font-bold text-xs sm:text-sm text-slate-800 uppercase tracking-wider flex items-center gap-1.5">
+                    <Truck className="w-4 h-4 text-indigo-600" />
+                    <span>উপজেলা অনুযায়ী ডেলিভারি চার্জ ও ফ্রি নিয়ন্ত্রণ</span>
+                  </h4>
+                  <p className="text-[11px] text-slate-500 mt-0.5">
+                    সন্দ্বীপের ভিতরে ফ্রি (৳০), সন্দ্বীপের বাহিরে ১৩০ টাকা। যেকোনো উপজেলায় নাম সিলেক্ট করে 'ফ্রি' বা কম চার্জ নির্ধারণ করুন:
+                  </p>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={openAddZone}
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs rounded-xl shadow-xs transition-all cursor-pointer self-start sm:self-auto"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ নতুন উপজেলা / এলাকা যুক্ত করুন</span>
+                </button>
+              </div>
+
+              {/* Informative Guidance Note */}
+              <div className="p-3 bg-amber-50/80 border border-amber-200 rounded-xl text-xs text-amber-900 flex items-start gap-2">
+                <Info className="w-4 h-4 text-amber-600 shrink-0 mt-0.5" />
+                <div className="leading-relaxed text-[11px]">
+                  <strong>এডমিন কন্ট্রোল:</strong> আপনি যেকোনো উপজেলার জন্য চার্জ পরিবর্তন করতে পারবেন। নিচে প্রতিটি এলাকার নামের পাশে সরাসরি 
+                  <span className="font-bold text-emerald-800 bg-emerald-100 px-1 py-0.5 rounded mx-1">ফ্রি (৳০)</span> 
+                  বাটন চেপে চার্জ ফ্রি করে দিতে পারেন অথবা কাস্টম এমাউন্ট সেট করতে পারেন।
+                </div>
+              </div>
 
               <div className="space-y-2.5">
                 {(form.deliveryZones || []).map((zone) => (
                   <div
                     key={zone.id}
-                    className={`p-3.5 rounded-xl border flex flex-col sm:flex-row sm:items-center justify-between gap-3 ${
+                    className={`p-3.5 rounded-xl border flex flex-col lg:flex-row lg:items-center justify-between gap-3 ${
                       zone.enabled ? 'bg-white border-slate-200' : 'bg-slate-50 border-slate-200 opacity-60'
                     }`}
                   >
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-lg bg-indigo-50 text-indigo-700 flex items-center justify-center font-bold text-xs shrink-0">
+                      <div className={`w-9 h-9 rounded-xl flex items-center justify-center font-bold text-xs shrink-0 ${
+                        zone.charge === 0 
+                          ? 'bg-emerald-100 text-emerald-800' 
+                          : 'bg-indigo-50 text-indigo-700'
+                      }`}>
                         <Truck className="w-4 h-4" />
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-bold text-sm text-slate-900">{zone.name}</span>
-                          <span className="px-2 py-0.5 rounded-md bg-indigo-100 text-indigo-900 text-xs font-bold">
-                            ৳{zone.charge}
+                          {zone.isInsideSandwip && (
+                            <span className="px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 text-[10px] font-bold">
+                              সন্দ্বীপ
+                            </span>
+                          )}
+                          <span className={`px-2 py-0.5 rounded-md text-xs font-black ${
+                            zone.charge === 0 
+                              ? 'bg-emerald-100 text-emerald-900 border border-emerald-300' 
+                              : 'bg-indigo-100 text-indigo-900'
+                          }`}>
+                            {zone.charge === 0 ? '✓ ফ্রি ডেলিভারি (৳০)' : `চার্জ: ৳${zone.charge}`}
                           </span>
                         </div>
                         {zone.estimatedTime && (
-                          <span className="text-xs text-slate-500 block">
+                          <span className="text-xs text-slate-500 block mt-0.5">
                             ডেলিভারি সময়সীমা: {zone.estimatedTime}
                           </span>
                         )}
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 self-end sm:self-auto">
+                    <div className="flex items-center gap-2 flex-wrap self-end lg:self-auto">
+                      {/* 1-Click Quick Price Adjuster */}
+                      <div className="flex items-center gap-1 bg-slate-100 p-1 rounded-xl">
+                        {zone.charge !== 0 ? (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = (form.deliveryZones || []).map(z => 
+                                z.id === zone.id ? { ...z, charge: 0 } : z
+                              );
+                              setForm({ ...form, deliveryZones: updated });
+                            }}
+                            className="px-2 py-1 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-black text-[10px] transition-colors cursor-pointer"
+                            title="১-ক্লিকে ফ্রি করে দিন"
+                          >
+                            ✓ ফ্রি (৳০) করুন
+                          </button>
+                        ) : (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = (form.deliveryZones || []).map(z => 
+                                z.id === zone.id ? { ...z, charge: 130 } : z
+                              );
+                              setForm({ ...form, deliveryZones: updated });
+                            }}
+                            className="px-2 py-1 rounded-lg bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-[10px] transition-colors cursor-pointer"
+                            title="চার্জ ১৩০ টাকা করুন"
+                          >
+                            চার্জ ৳১৩০
+                          </button>
+                        )}
+
+                        {[50, 70, 100].map((amt) => (
+                          <button
+                            key={amt}
+                            type="button"
+                            onClick={() => {
+                              const updated = (form.deliveryZones || []).map(z => 
+                                z.id === zone.id ? { ...z, charge: amt } : z
+                              );
+                              setForm({ ...form, deliveryZones: updated });
+                            }}
+                            className={`px-1.5 py-1 rounded-lg text-[10px] font-bold transition-colors cursor-pointer ${
+                              zone.charge === amt
+                                ? 'bg-indigo-600 text-white'
+                                : 'hover:bg-slate-200 text-slate-700'
+                            }`}
+                            title={`চার্জ ৳${amt} করুন`}
+                          >
+                            ৳{amt}
+                          </button>
+                        ))}
+                      </div>
+
                       <button
                         type="button"
                         onClick={() => handleToggleZone(zone.id)}
-                        className={`px-3 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
+                        className={`px-2.5 py-1.5 rounded-lg text-xs font-bold transition cursor-pointer ${
                           zone.enabled
                             ? 'bg-slate-100 hover:bg-slate-200 text-slate-700'
                             : 'bg-emerald-50 hover:bg-emerald-100 text-emerald-800'
                         }`}
                       >
-                        {zone.enabled ? 'বন্ধ করুন' : 'সক্রিয় করুন'}
+                        {zone.enabled ? 'বন্ধ' : 'সক্রিয়'}
                       </button>
 
                       <button
                         type="button"
                         onClick={() => setEditingZone({ isOpen: true, isNew: false, data: { ...zone } })}
-                        className="p-2 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
-                        title="Edit"
+                        className="p-1.5 text-slate-600 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition"
+                        title="সম্পাদনা"
                       >
                         <Edit3 className="w-4 h-4" />
                       </button>
@@ -1774,8 +2069,8 @@ export const SettingsManager: React.FC = () => {
                       <button
                         type="button"
                         onClick={() => handleDeleteZone(zone.id)}
-                        className="p-2 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
-                        title="Delete"
+                        className="p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg transition"
+                        title="মুছে ফেলুন"
                       >
                         <Trash2 className="w-4 h-4" />
                       </button>
@@ -1801,6 +2096,127 @@ export const SettingsManager: React.FC = () => {
       )}
 
       {/* ==================== MODALS & EDITORS ==================== */}
+
+      {/* 0. EDIT / ADD STORE ADDRESS MODAL */}
+      {editingAddress && editingAddress.isOpen && (
+        <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl max-w-md w-full p-6 shadow-2xl border border-slate-200 space-y-4 animate-in zoom-in-95 duration-150">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+              <h4 className="font-bold text-sm text-slate-900 flex items-center gap-2">
+                <MapPin className="w-4 h-4 text-amber-600" />
+                <span>{editingAddress.isNew ? 'নতুন শাখা বা ঠিকানা যোগ করুন' : 'দোকানের ঠিকানা সম্পাদনা করুন'}</span>
+              </h4>
+              <button
+                type="button"
+                onClick={() => setEditingAddress(null)}
+                className="p-1 text-slate-400 hover:text-slate-600 rounded-lg"
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  শাখা / টাইটেল <span className="text-red-500">*</span>
+                </label>
+                <input
+                  type="text"
+                  required
+                  value={editingAddress.data.title}
+                  onChange={(e) => setEditingAddress({
+                    ...editingAddress,
+                    data: { ...editingAddress.data, title: e.target.value }
+                  })}
+                  placeholder="যেমন: প্রধান কার্যালয় ও হাব (সন্দ্বীপ)"
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-bold text-slate-900"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-slate-700 mb-1">
+                  পূর্ণ ঠিকানা ও পোস্টকোড <span className="text-red-500">*</span>
+                </label>
+                <textarea
+                  rows={3}
+                  required
+                  value={editingAddress.data.address}
+                  onChange={(e) => setEditingAddress({
+                    ...editingAddress,
+                    data: { ...editingAddress.data, address: e.target.value }
+                  })}
+                  placeholder="পোস্টকোড ৪৩০১, সন্দ্বীপ, চট্টগ্রাম, বাংলাদেশ..."
+                  className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm text-slate-900 leading-relaxed"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">ফোন নম্বর (ঐচ্ছিক)</label>
+                  <input
+                    type="text"
+                    value={editingAddress.data.phone || ''}
+                    onChange={(e) => setEditingAddress({
+                      ...editingAddress,
+                      data: { ...editingAddress.data, phone: e.target.value }
+                    })}
+                    placeholder="01867841638"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">বিশেষ নোট</label>
+                  <input
+                    type="text"
+                    value={editingAddress.data.notes || ''}
+                    onChange={(e) => setEditingAddress({
+                      ...editingAddress,
+                      data: { ...editingAddress.data, notes: e.target.value }
+                    })}
+                    placeholder="যেমন: মূল ডেলিভারি সেন্টার"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="pt-2">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={editingAddress.data.isPrimary || false}
+                    onChange={(e) => setEditingAddress({
+                      ...editingAddress,
+                      data: { ...editingAddress.data, isPrimary: e.target.checked }
+                    })}
+                    className="w-4 h-4 rounded text-amber-600 focus:ring-amber-500"
+                  />
+                  <span className="text-xs font-bold text-slate-800">
+                    প্রধান কার্যালয় (Primary Address) হিসেবে নির্ধারণ করুন
+                  </span>
+                </label>
+              </div>
+            </div>
+
+            <div className="flex justify-end gap-2 pt-2 border-t border-slate-100">
+              <button
+                type="button"
+                onClick={() => setEditingAddress(null)}
+                className="px-4 py-2 text-xs font-bold text-slate-600 hover:bg-slate-100 rounded-xl"
+              >
+                বাতিল
+              </button>
+              <button
+                type="button"
+                onClick={() => handleSaveAddress(editingAddress.data)}
+                className="px-5 py-2 text-xs font-bold text-white bg-amber-600 hover:bg-amber-500 rounded-xl shadow-xs"
+              >
+                সংরক্ষণ করুন
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 1. EDIT / ADD PHONE MODAL */}
       {editingPhone && editingPhone.isOpen && (
@@ -2374,10 +2790,10 @@ export const SettingsManager: React.FC = () => {
               </button>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-3.5">
               <div>
                 <label className="block text-xs font-bold text-slate-700 mb-1">
-                  জোনের নাম <span className="text-red-500">*</span>
+                  উপজেলা বা জোনের নাম <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -2387,16 +2803,74 @@ export const SettingsManager: React.FC = () => {
                     ...editingZone,
                     data: { ...editingZone.data, name: e.target.value }
                   })}
-                  placeholder="যেমন: চট্টগ্রাম সিটি হোম ডেলিভারি"
+                  placeholder="যেমন: সীতাকুণ্ড উপজেলা অথবা চট্টগ্রাম সদর"
                   className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-bold text-slate-900"
                 />
+
+                {/* Quick Upazila Presets Selection */}
+                <div className="mt-2">
+                  <span className="text-[10px] font-bold text-slate-500 block mb-1">
+                    কুইক উপজেলা সিলেক্ট করুন:
+                  </span>
+                  <div className="flex flex-wrap gap-1.5 max-h-24 overflow-y-auto pr-1">
+                    {[
+                      'সন্দ্বীপ উপজেলা',
+                      'চট্টগ্রাম সদর',
+                      'সীতাকুণ্ড উপজেলা',
+                      'মীরসরাই উপজেলা',
+                      'ফটিকছড়ি উপজেলা',
+                      'হাটহাজারী উপজেলা',
+                      'রাউজান উপজেলা',
+                      'রাঙ্গুনিয়া উপজেলা',
+                      'পটিয়া উপজেলা',
+                      'বোয়ালখালী উপজেলা',
+                      'আনোয়ারা উপজেলা',
+                      'চন্দনাইশ উপজেলা',
+                      'বাঁশখালী উপজেলা',
+                      'সাতকানিয়া উপজেলা',
+                      'লোহাগাড়া উপজেলা',
+                      'কক্সবাজার সদর',
+                      'ঢাকা সিটি'
+                    ].map((upazila) => (
+                      <button
+                        key={upazila}
+                        type="button"
+                        onClick={() => {
+                          const isSandwip = upazila.includes('সন্দ্বীপ');
+                          setEditingZone({
+                            ...editingZone,
+                            data: {
+                              ...editingZone.data,
+                              name: upazila,
+                              isInsideSandwip: isSandwip,
+                              charge: isSandwip ? 0 : editingZone.data.charge
+                            }
+                          });
+                        }}
+                        className={`text-[10px] px-2 py-0.5 rounded-md border transition-all ${
+                          editingZone.data.name === upazila
+                            ? 'bg-indigo-600 text-white border-indigo-600 font-bold'
+                            : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                        }`}
+                      >
+                        {upazila}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">
-                    চার্জ (৳) <span className="text-red-500">*</span>
+              <div>
+                <div className="flex items-center justify-between mb-1">
+                  <label className="block text-xs font-bold text-slate-700">
+                    ডেলিভারি চার্জ (৳) <span className="text-red-500">*</span>
                   </label>
+                  <span className="text-[11px] font-bold text-indigo-700">
+                    {editingZone.data.charge === 0 ? '✓ ফ্রি ডেলিভারি (৳০)' : `চার্জ: ৳${editingZone.data.charge}`}
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-2 gap-3 mb-2">
                   <input
                     type="number"
                     min="0"
@@ -2406,12 +2880,9 @@ export const SettingsManager: React.FC = () => {
                       ...editingZone,
                       data: { ...editingZone.data, charge: Number(e.target.value) }
                     })}
-                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-bold text-slate-900"
+                    className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm font-black text-slate-900"
                   />
-                </div>
 
-                <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">আনুমানিক সময়</label>
                   <input
                     type="text"
                     value={editingZone.data.estimatedTime || ''}
@@ -2419,9 +2890,40 @@ export const SettingsManager: React.FC = () => {
                       ...editingZone,
                       data: { ...editingZone.data, estimatedTime: e.target.value }
                     })}
-                    placeholder="২৪-৪৮ ঘণ্টা"
+                    placeholder="সময় (যেমন: ২৪-৪৮ ঘণ্টা)"
                     className="w-full px-3.5 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs sm:text-sm"
                   />
+                </div>
+
+                {/* 1-Click Quick Charge Presets */}
+                <div className="flex items-center gap-1.5 flex-wrap">
+                  <button
+                    type="button"
+                    onClick={() => setEditingZone({
+                      ...editingZone,
+                      data: { ...editingZone.data, charge: 0 }
+                    })}
+                    className="px-2.5 py-1 rounded-lg bg-emerald-100 hover:bg-emerald-200 text-emerald-900 font-black text-[11px] border border-emerald-300 transition-colors"
+                  >
+                    ✓ ফ্রি ডেলিভারি (৳০)
+                  </button>
+                  {[50, 80, 100, 130].map((amt) => (
+                    <button
+                      key={amt}
+                      type="button"
+                      onClick={() => setEditingZone({
+                        ...editingZone,
+                        data: { ...editingZone.data, charge: amt }
+                      })}
+                      className={`px-2 py-1 rounded-lg text-[11px] font-bold border transition-colors ${
+                        editingZone.data.charge === amt
+                          ? 'bg-indigo-600 text-white border-indigo-600'
+                          : 'bg-slate-100 hover:bg-slate-200 text-slate-700 border-slate-200'
+                      }`}
+                    >
+                      ৳{amt}
+                    </button>
+                  ))}
                 </div>
               </div>
 

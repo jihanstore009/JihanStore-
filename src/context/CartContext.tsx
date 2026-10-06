@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { CartItem, Product } from '../types';
+import { CartItem, Product, StoreDeliveryZone } from '../types';
 
 interface CartContextType {
   cart: CartItem[];
@@ -10,8 +10,10 @@ interface CartContextType {
   totalItems: number;
   subtotal: number;
   deliveryArea: 'inside_sandwip' | 'outside_sandwip';
+  selectedZoneId?: string;
   setDeliveryArea: (area: 'inside_sandwip' | 'outside_sandwip') => void;
-  getDeliveryCharge: (chargeInside: number, chargeOutside: number) => number;
+  setSelectedZoneId: (zoneId?: string) => void;
+  getDeliveryCharge: (chargeInside?: number, chargeOutside?: number, deliveryZones?: StoreDeliveryZone[]) => number;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
@@ -27,6 +29,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   });
 
   const [deliveryArea, setDeliveryArea] = useState<'inside_sandwip' | 'outside_sandwip'>('inside_sandwip');
+  const [selectedZoneId, setSelectedZoneId] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     try {
@@ -70,7 +73,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const totalItems = cart.reduce((sum, item) => sum + item.quantity, 0);
   const subtotal = cart.reduce((sum, item) => sum + item.product.price * item.quantity, 0);
 
-  const getDeliveryCharge = (chargeInside: number = 0, chargeOutside: number = 130) => {
+  const getDeliveryCharge = (chargeInside: number = 0, chargeOutside: number = 130, deliveryZones?: StoreDeliveryZone[]) => {
+    if (selectedZoneId && deliveryZones && deliveryZones.length > 0) {
+      const match = deliveryZones.find(z => z.id === selectedZoneId && z.enabled);
+      if (match) {
+        return match.charge;
+      }
+    }
     return deliveryArea === 'inside_sandwip' ? chargeInside : chargeOutside;
   };
 
@@ -85,7 +94,9 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         totalItems,
         subtotal,
         deliveryArea,
+        selectedZoneId,
         setDeliveryArea,
+        setSelectedZoneId,
         getDeliveryCharge,
       }}
     >

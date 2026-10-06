@@ -20,14 +20,16 @@ export const CartModal: React.FC<CartModalProps> = ({
     updateQuantity, 
     subtotal, 
     deliveryArea, 
+    selectedZoneId,
     setDeliveryArea, 
+    setSelectedZoneId,
     getDeliveryCharge 
   } = useCart();
   const { settings } = useSettings();
 
   if (!isOpen) return null;
 
-  const deliveryCharge = getDeliveryCharge(settings.deliveryInsideSandwip, settings.deliveryOutsideSandwip);
+  const deliveryCharge = getDeliveryCharge(settings.deliveryInsideSandwip, settings.deliveryOutsideSandwip, settings.deliveryZones);
   const totalAmount = subtotal + deliveryCharge;
 
   return (
@@ -138,22 +140,30 @@ export const CartModal: React.FC<CartModalProps> = ({
               <div className="grid grid-cols-2 gap-2 text-xs">
                 <button
                   type="button"
-                  onClick={() => setDeliveryArea('inside_sandwip')}
-                  className={`p-2 rounded-xl border text-left transition-all ${
-                    deliveryArea === 'inside_sandwip'
+                  onClick={() => {
+                    setDeliveryArea('inside_sandwip');
+                    setSelectedZoneId(undefined);
+                  }}
+                  className={`p-2 rounded-xl border text-left transition-all cursor-pointer ${
+                    deliveryArea === 'inside_sandwip' && !selectedZoneId
                       ? 'border-blue-700 bg-blue-50/80 text-blue-900 font-bold ring-1 ring-blue-700'
                       : 'border-slate-200 bg-white text-slate-700'
                   }`}
                 >
                   <p className="font-semibold text-xs">সন্দ্বীপের ভিতরে</p>
-                  <p className="text-[11px] text-emerald-600 font-bold">৳{settings.deliveryInsideSandwip} (ফ্রি)</p>
+                  <p className="text-[11px] text-emerald-600 font-bold">
+                    {settings.deliveryInsideSandwip === 0 ? 'ফ্রি' : `৳${settings.deliveryInsideSandwip}`}
+                  </p>
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => setDeliveryArea('outside_sandwip')}
-                  className={`p-2 rounded-xl border text-left transition-all ${
-                    deliveryArea === 'outside_sandwip'
+                  onClick={() => {
+                    setDeliveryArea('outside_sandwip');
+                    setSelectedZoneId(undefined);
+                  }}
+                  className={`p-2 rounded-xl border text-left transition-all cursor-pointer ${
+                    deliveryArea === 'outside_sandwip' && !selectedZoneId
                       ? 'border-blue-700 bg-blue-50/80 text-blue-900 font-bold ring-1 ring-blue-700'
                       : 'border-slate-200 bg-white text-slate-700'
                   }`}
@@ -162,6 +172,35 @@ export const CartModal: React.FC<CartModalProps> = ({
                   <p className="text-[11px] text-blue-700 font-bold">৳{settings.deliveryOutsideSandwip}</p>
                 </button>
               </div>
+
+              {/* Dynamic Upazilas Dropdown / Selection */}
+              {settings.deliveryZones && settings.deliveryZones.filter(z => z.enabled).length > 0 && (
+                <div className="pt-1">
+                  <select
+                    value={selectedZoneId || ''}
+                    onChange={(e) => {
+                      const val = e.target.value;
+                      if (!val) {
+                        setSelectedZoneId(undefined);
+                      } else {
+                        setSelectedZoneId(val);
+                        const match = settings.deliveryZones?.find(z => z.id === val);
+                        if (match) {
+                          setDeliveryArea(match.isInsideSandwip ? 'inside_sandwip' : 'outside_sandwip');
+                        }
+                      }
+                    }}
+                    className="w-full text-xs p-2 bg-white border border-slate-200 rounded-xl font-medium text-slate-800 focus:ring-2 focus:ring-blue-600 cursor-pointer"
+                  >
+                    <option value="">-- নির্দিষ্ট উপজেলা বা জোন নির্বাচন করুন --</option>
+                    {settings.deliveryZones.filter(z => z.enabled).map((z) => (
+                      <option key={z.id} value={z.id}>
+                        {z.name} - {z.charge === 0 ? 'ফ্রি ডেলিভারি' : `৳${z.charge}`}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              )}
             </div>
 
             {/* Calculations Breakdown */}
